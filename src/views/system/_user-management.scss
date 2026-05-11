@@ -1,0 +1,132 @@
+// ============================================
+// User Management Styles
+// ============================================
+
+@use '@/scss/variables' as *;
+@use '@/scss/mixins' as *;
+
+.user-management-container {
+  @include custom-scrollbar;
+}
+
+// Filter Bar
+.filter-bar {
+  @include industrial-card;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      
+      .filter-label {
+        font-size: 13px;
+        color: #666;
+      }
+      
+      .el-input,
+      .el-select {
+        width: 160px;
+      }
+    }
+  }
+}
+
+// User Table Card
+.user-table-card {
+  @include industrial-card;
+  
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+}
+
+// Table Styles
+.user-table {
+  .el-table {
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      
+      .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #0070f3 0%, #7928ca 100%);
+        color: #fff;
+        @include flex-center;
+        font-size: 18px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      
+      .user-info {
+        .user-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: #1a1a2e;
+          margin-bottom: 4px;
+        }
+        
+        .user-email {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+    }
+    
+    .role-cell {
+      .el-tag {
+        border-radius: 3px;
+        margin-right: 4px;
+        
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
+    
+    .status-cell {
+      .el-tag {
+        border-radius: 3px;
+      }
+    }
+    
+    .action-cell {
+      .el-button {
+        padding: 4px 8px;
+      }
+    }
+  }
+}
+
+// Pagination
+.table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid #e8e8e8;
+}

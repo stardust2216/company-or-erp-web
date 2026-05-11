@@ -1,0 +1,169 @@
+// ============================================
+// Role Management Styles
+// ============================================
+
+@use '@/scss/variables' as *;
+@use '@/scss/mixins' as *;
+
+.role-management-container {
+  @include custom-scrollbar;
+}
+
+// Role List
+.role-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.role-card {
+  @include industrial-card;
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .role-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      .role-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        @include flex-center;
+        font-size: 20px;
+        
+        &.super-admin {
+          background: rgba(229, 57, 53, 0.1);
+          color: #e53935;
+        }
+        
+        &.admin {
+          background: rgba(251, 140, 0, 0.1);
+          color: #fb8c00;
+        }
+        
+        &.user {
+          background: rgba(26, 115, 232, 0.1);
+          color: #1a73e8;
+        }
+      }
+      
+      .role-details {
+        .role-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #333;
+          margin-bottom: 2px;
+        }
+        
+        .role-code {
+          font-size: 12px;
+          color: #999;
+        }
+      }
+    }
+    
+    .role-actions {
+      display: flex;
+      gap: 4px;
+    }
+  }
+  
+  .card-body {
+    padding: 16px 20px;
+    
+    .role-desc {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    
+    .role-stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 16px;
+      
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        
+        .stat-icon {
+          font-size: 16px;
+          color: #999;
+        }
+        
+        .stat-value {
+          font-size: 14px;
+          font-weight: 500;
+          color: #333;
+        }
+      }
+    }
+    
+    .role-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      
+      .permission-tag {
+        padding: 4px 10px;
+        background: #f5f7fa;
+        border-radius: 3px;
+        font-size: 12px;
+        color: #666;
+      }
+    }
+  }
+}
+
+// Add Role Card
+.add-role-card {
+  @include industrial-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  cursor: pointer;
+  border: 2px dashed #e8e8e8;
+  background: transparent;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #1a73e8;
+    background: rgba(26, 115, 232, 0.04);
+    
+    .add-icon {
+      color: #1a73e8;
+    }
+    
+    .add-text {
+      color: #1a73e8;
+    }
+  }
+  
+  .add-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 12px;
+    transition: color 0.2s;
+  }
+  
+  .add-text {
+    font-size: 14px;
+    color: #999;
+    transition: color 0.2s;
+  }
+}

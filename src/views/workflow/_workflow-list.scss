@@ -1,0 +1,126 @@
+// ============================================
+// Workflow List Styles
+// ============================================
+
+@use '@/scss/variables' as *;
+@use '@/scss/mixins' as *;
+
+.workflow-list-container {
+  @include custom-scrollbar;
+}
+
+// Filter Bar
+.filter-bar {
+  @include industrial-card;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .filter-label {
+        font-size: 14px;
+        color: #666;
+        white-space: nowrap;
+      }
+      
+      .el-select,
+      .el-input {
+        width: 180px;
+      }
+    }
+  }
+}
+
+// Workflow Table Card
+.workflow-table-card {
+  @include industrial-card;
+  
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+}
+
+// Table Styles
+.workflow-table {
+  .el-table {
+    .cell {
+      .workflow-title-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        .workflow-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          @include flex-center;
+          font-size: 16px;
+          
+          &.leave {
+            background: rgba(26, 115, 232, 0.1);
+            color: #1a73e8;
+          }
+          
+          &.purchase {
+            background: rgba(251, 140, 0, 0.1);
+            color: #fb8c00;
+          }
+          
+          &.expense {
+            background: rgba(229, 57, 53, 0.1);
+            color: #e53935;
+          }
+          
+          &.overtime {
+            background: rgba(92, 107, 192, 0.1);
+            color: #5c6bc0;
+          }
+        }
+      }
+    }
+    
+    .status-cell {
+      .el-tag {
+        border-radius: 3px;
+      }
+    }
+    
+    .action-cell {
+      .el-button {
+        padding: 4px 8px;
+      }
+    }
+  }
+}
+
+// Pagination
+.table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid #e8e8e8;
+}

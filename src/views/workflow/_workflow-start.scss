@@ -1,0 +1,239 @@
+// ============================================
+// Workflow Start Styles
+// ============================================
+
+@use '@/scss/variables' as *;
+@use '@/scss/mixins' as *;
+
+.workflow-start-container {
+  @include custom-scrollbar;
+}
+
+.start-card {
+  @include industrial-card;
+  max-width: 800px;
+  margin: 0 auto;
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      .back-btn {
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        
+        &:hover {
+          background-color: #f5f7fa;
+        }
+      }
+      
+      .header-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+    }
+  }
+  
+  .card-body {
+    padding: 24px;
+  }
+}
+
+// Workflow Type Selection
+.type-selection {
+  margin-bottom: 32px;
+  
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+  }
+  
+  .type-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .type-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+    background: #f8fafc;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: rgba(26, 115, 232, 0.04);
+      border-color: rgba(26, 115, 232, 0.3);
+    }
+    
+    &.active {
+      background: rgba(26, 115, 232, 0.08);
+      border-color: #1a73e8;
+      
+      .type-icon {
+        color: #1a73e8;
+      }
+      
+      .type-name {
+        color: #1a73e8;
+      }
+    }
+    
+    .type-icon {
+      font-size: 32px;
+      color: #666;
+      margin-bottom: 12px;
+      transition: color 0.2s;
+    }
+    
+    .type-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      transition: color 0.2s;
+    }
+  }
+}
+
+// Form Section
+.form-section {
+  margin-bottom: 24px;
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #1a73e8;
+    display: inline-block;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+    
+    .form-item {
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+      
+      .form-label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #333;
+        
+        .required {
+          color: #e53935;
+          margin-left: 4px;
+        }
+      }
+      
+      .form-hint {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+// Leave Date Range
+.leave-date-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  .date-separator {
+    color: #999;
+  }
+}
+
+// Submit Section
+.submit-section {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #e8e8e8;
+  margin-top: 24px;
+  
+  .el-button {
+    min-width: 120px;
+  }
+}
+
+// Approval Flow Preview
+.approval-preview {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 6px;
+  
+  .preview-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+  }
+  
+  .preview-flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .flow-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #fff;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #333;
+      
+      .flow-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1a73e8 0%, #5c6bc0 100%);
+        color: #fff;
+        @include flex-center;
+        font-size: 10px;
+        font-weight: 600;
+      }
+    }
+    
+    .flow-arrow {
+      color: #ccc;
+    }
+  }
+}

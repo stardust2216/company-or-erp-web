@@ -1,0 +1,332 @@
+// ============================================
+// Attendance Styles
+// ============================================
+
+@use '@/scss/variables' as *;
+@use '@/scss/mixins' as *;
+
+.attendance-container {
+  @include custom-scrollbar;
+}
+
+// Stats Card
+.stats-card {
+  @include industrial-card;
+  padding: 20px;
+  margin-bottom: 16px;
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 16px;
+      
+      .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 4px;
+        
+        &.success { color: #43a047; }
+        &.warning { color: #fb8c00; }
+        &.danger { color: #e53935; }
+      }
+      
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+      }
+    }
+  }
+}
+
+// Check In Card
+.checkin-card {
+  @include industrial-card;
+  margin-bottom: 16px;
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .current-date {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+  
+  .card-body {
+    padding: 32px;
+    
+    .checkin-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 48px;
+      
+      @media (max-width: 640px) {
+        flex-direction: column;
+        gap: 24px;
+      }
+    }
+  }
+}
+
+.checkin-item {
+  text-align: center;
+  
+  .checkin-time {
+    font-size: 36px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  
+  .checkin-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 16px;
+  }
+  
+  .checkin-btn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    @include flex-center;
+    font-size: 18px;
+    font-weight: 600;
+    border: 3px solid;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &.punch-in {
+      background: rgba(26, 115, 232, 0.08);
+      border-color: #1a73e8;
+      color: #1a73e8;
+      
+      &:hover {
+        background: rgba(26, 115, 232, 0.15);
+        transform: scale(1.05);
+      }
+    }
+    
+    &.punch-out {
+      background: rgba(67, 160, 71, 0.08);
+      border-color: #43a047;
+      color: #43a047;
+      
+      &:hover {
+        background: rgba(67, 160, 71, 0.15);
+        transform: scale(1.05);
+      }
+    }
+    
+    &.disabled {
+      background: #f5f7fa;
+      border-color: #ddd;
+      color: #999;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+}
+
+.checkin-divider {
+  width: 2px;
+  height: 100px;
+  background: #e8e8e8;
+  
+  @media (max-width: 640px) {
+    width: 100px;
+    height: 2px;
+  }
+}
+
+// Calendar Card
+.calendar-card {
+  @include industrial-card;
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+  
+  .card-body {
+    padding: 16px;
+  }
+}
+
+// Calendar
+.attendance-calendar {
+  .calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+    
+    .header-cell {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      padding: 8px 0;
+    }
+  }
+  
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    
+    .calendar-cell {
+      aspect-ratio: 1;
+      @include flex-center;
+      font-size: 14px;
+      color: #333;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: #f5f7fa;
+      }
+      
+      &.other-month {
+        color: #ccc;
+      }
+      
+      &.today {
+        background: rgba(26, 115, 232, 0.1);
+        color: #1a73e8;
+        font-weight: 600;
+      }
+      
+      &.has-record {
+        .record-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #43a047;
+          position: absolute;
+          bottom: 4px;
+        }
+      }
+      
+      &.late {
+        background: rgba(251, 140, 0, 0.1);
+        color: #fb8c00;
+      }
+      
+      &.absent {
+        background: rgba(229, 57, 53, 0.1);
+        color: #e53935;
+      }
+    }
+  }
+}
+
+// Record List
+.record-section {
+  margin-top: 24px;
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+  }
+}
+
+.record-table {
+  @include industrial-card;
+  
+  .record-item {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .record-date {
+      width: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .record-time {
+      flex: 1;
+      display: flex;
+      gap: 24px;
+      
+      .time-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        .time-label {
+          font-size: 13px;
+          color: #666;
+        }
+        
+        .time-value {
+          font-size: 14px;
+          color: #333;
+          
+          &.normal { color: #43a047; }
+          &.late { color: #fb8c00; }
+          &.early { color: #fb8c00; }
+        }
+      }
+    }
+    
+    .record-status {
+      width: 100px;
+      text-align: right;
+      
+      .el-tag {
+        border-radius: 3px;
+      }
+    }
+  }
+}

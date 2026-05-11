@@ -1,0 +1,357 @@
+// ============================================
+// Dashboard Styles - Industrial Theme
+// ============================================
+
+@use '@/scss/variables' as *;
+@use '@/scss/mixins' as *;
+
+.dashboard-container {
+  padding: 0;
+}
+
+// ============================================
+// Welcome Section
+// ============================================
+
+.welcome-section {
+  background: linear-gradient(135deg, #1a73e8 0%, #5c6bc0 100%);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  
+  .welcome-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .welcome-text {
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  }
+  
+  .welcome-date {
+    text-align: right;
+    
+    .date {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .weather {
+      font-size: 32px;
+      margin-top: 4px;
+    }
+  }
+}
+
+// ============================================
+// Statistics Cards
+// ============================================
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stat-card {
+  @include industrial-card;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  
+  .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    @include flex-center;
+    font-size: 24px;
+    
+    &.primary {
+      background: rgba(26, 115, 232, 0.1);
+      color: #1a73e8;
+    }
+    
+    &.success {
+      background: rgba(67, 160, 71, 0.1);
+      color: #43a047;
+    }
+    
+    &.warning {
+      background: rgba(251, 140, 0, 0.1);
+      color: #fb8c00;
+    }
+    
+    &.danger {
+      background: rgba(229, 57, 53, 0.1);
+      color: #e53935;
+    }
+  }
+  
+  .stat-info {
+    flex: 1;
+    
+    .stat-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.2;
+    }
+    
+    .stat-change {
+      font-size: 12px;
+      margin-top: 4px;
+      
+      &.up {
+        color: #43a047;
+      }
+      
+      &.down {
+        color: #e53935;
+      }
+    }
+  }
+}
+
+// ============================================
+// Content Grid
+// ============================================
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ============================================
+// Panel Card
+// ============================================
+
+.panel-card {
+  @include industrial-card;
+  
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .el-icon {
+        color: #1a73e8;
+      }
+    }
+    
+    .panel-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+  
+  .panel-body {
+    padding: 16px 20px;
+  }
+}
+
+// ============================================
+// Workflow List
+// ============================================
+
+.workflow-list {
+  .workflow-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .workflow-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      @include flex-center;
+      margin-right: 12px;
+      
+      &.pending {
+        background: rgba(251, 140, 0, 0.1);
+        color: #fb8c00;
+      }
+      
+      &.approved {
+        background: rgba(67, 160, 71, 0.1);
+        color: #43a047;
+      }
+      
+      &.rejected {
+        background: rgba(229, 57, 53, 0.1);
+        color: #e53935;
+      }
+    }
+    
+    .workflow-info {
+      flex: 1;
+      
+      .workflow-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 4px;
+      }
+      
+      .workflow-meta {
+        font-size: 12px;
+        color: #999;
+      }
+    }
+    
+    .workflow-status {
+      @include industrial-badge;
+    }
+    
+    .workflow-action {
+      margin-left: 12px;
+    }
+  }
+}
+
+// ============================================
+// Quick Actions
+// ============================================
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  
+  .action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: rgba(26, 115, 232, 0.08);
+      
+      .action-icon {
+        color: #1a73e8;
+      }
+      
+      .action-text {
+        color: #1a73e8;
+      }
+    }
+    
+    .action-icon {
+      font-size: 28px;
+      color: #666;
+      margin-bottom: 8px;
+      transition: color 0.2s;
+    }
+    
+    .action-text {
+      font-size: 13px;
+      color: #333;
+      transition: color 0.2s;
+    }
+  }
+}
+
+// ============================================
+// Notice List
+// ============================================
+
+.notice-list {
+  .notice-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .notice-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      @include flex-center;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 12px;
+      flex-shrink: 0;
+      
+      &.important {
+        background: rgba(229, 57, 53, 0.1);
+        color: #e53935;
+      }
+      
+      &.normal {
+        background: rgba(26, 115, 232, 0.1);
+        color: #1a73e8;
+      }
+    }
+    
+    .notice-content {
+      flex: 1;
+      
+      .notice-title {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 4px;
+        @include text-truncate;
+      }
+      
+      .notice-date {
+        font-size: 12px;
+        color: #999;
+      }
+    }
+  }
+}

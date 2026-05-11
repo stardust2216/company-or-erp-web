@@ -1,0 +1,245 @@
+// ============================================
+// Employee Detail Styles
+// ============================================
+
+@use '@/scss/variables' as *;
+@use '@/scss/mixins' as *;
+
+.employee-detail-container {
+  @include custom-scrollbar;
+}
+
+.detail-card {
+  @include industrial-card;
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      .back-btn {
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        
+        &:hover {
+          background-color: #f5f7fa;
+        }
+      }
+      
+      .header-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+    }
+    
+    .header-right {
+      display: flex;
+      gap: 8px;
+    }
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+}
+
+// Profile Header
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #1a73e8 0%, #5c6bc0 100%);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #fff;
+    color: #1a73e8;
+    @include flex-center;
+    font-size: 32px;
+    font-weight: 700;
+  }
+  
+  .profile-info {
+    flex: 1;
+    color: #fff;
+    
+    .profile-name {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .profile-position {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .profile-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      
+      .tag {
+        padding: 4px 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+// Info Section
+.info-section {
+  margin-bottom: 24px;
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #1a73e8;
+    display: inline-block;
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    
+    .info-label {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .info-value {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+      
+      &.highlight {
+        color: #1a73e8;
+      }
+    }
+  }
+}
+
+// Tab Section
+.tab-section {
+  .info-tabs {
+    margin-bottom: 16px;
+  }
+}
+
+// Contract List
+.contract-list {
+  .contract-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .contract-info {
+      .contract-type {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 4px;
+      }
+      
+      .contract-period {
+        font-size: 13px;
+        color: #666;
+      }
+    }
+    
+    .contract-status {
+      @include industrial-badge(#43a047);
+    }
+  }
+}
+
+// Emergency Contact
+.emergency-contact {
+  .contact-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .contact-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(26, 115, 232, 0.1);
+      color: #1a73e8;
+      @include flex-center;
+      font-size: 14px;
+      font-weight: 600;
+      margin-right: 12px;
+    }
+    
+    .contact-info {
+      flex: 1;
+      
+      .contact-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .contact-relation {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+    
+    .contact-phone {
+      color: #1a73e8;
+      font-size: 14px;
+    }
+  }
+}
