@@ -4,6 +4,7 @@
 // ✅  接入真实后端时：取消注释 http 调用，删除对应 mock 实现即可
 
 // import http from './http'
+import type { UserRole } from '@/types/auth'
 
 // ─────────────────────────────────────────────
 // 类型定义
@@ -11,13 +12,15 @@
 export interface LoginPayload {
   username: string
   password: string
+  role?: UserRole
 }
 
 export interface LoginResult {
   token: string
   username: string
   realName: string
-  role: string
+  role: UserRole
+  roleName: string
   userId: string | number
 }
 
@@ -63,9 +66,19 @@ export interface UpdateUserInfoPayload {
 const mockDelay = (ms = 800) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 /** 模拟用户数据库（内存态，刷新即清空） */
-const mockUsers: Record<string, { password: string; email: string; realName: string; role: string }> = {
-  admin: { password: 'admin123', email: 'admin@example.com', realName: '系统管理员', role: '管理员' },
-  demo: { password: 'demo123', email: 'demo@example.com', realName: '演示用户', role: '普通用户' }
+const mockUsers: Record<string, { password: string; email: string; realName: string; role: UserRole; roleName: string }> = {
+  admin: { password: 'admin123', email: 'admin@example.com', realName: '系统管理员', role: 'admin', roleName: '系统管理员' },
+  manager: { password: 'manager123', email: 'manager@example.com', realName: '部门主管', role: 'manager', roleName: '部门主管' },
+  director: { password: 'director123', email: 'director@example.com', realName: '董事经理', role: 'director', roleName: '董事经理' },
+  demo: { password: 'demo123', email: 'demo@example.com', realName: '演示用户', role: 'employee', roleName: '普通员工' }
+}
+
+/** 角色名称映射 */
+const roleNameMap: Record<UserRole, string> = {
+  employee: '普通员工',
+  manager: '部门主管',
+  director: '董事经理',
+  admin: '系统管理员'
 }
 
 // ─────────────────────────────────────────────
@@ -80,6 +93,7 @@ const mockUsers: Record<string, { password: string; email: string; realName: str
 export async function login(data: LoginPayload): Promise<{ data: LoginResult }> {
   // ── 接入真实后端时替换为: return http.post('/auth/login', data)
   await mockDelay()
+  
   const user = mockUsers[data.username]
   if (user && user.password === data.password) {
     return {
@@ -88,18 +102,22 @@ export async function login(data: LoginPayload): Promise<{ data: LoginResult }> 
         username: data.username,
         realName: user.realName,
         role: user.role,
+        roleName: user.roleName,
         userId: Math.random().toString(36).slice(2)
       }
     }
   }
-  // 宽松模式：任意用户名 + 6位以上密码也能登录
+  
+  // 宽松模式：任意用户名 + 6位以上密码也能登录，使用选择的角色
   if (data.username.trim() && data.password.length >= 6) {
+    const selectedRole = data.role || 'employee'
     return {
       data: {
         token: `mock_token_${Date.now()}`,
         username: data.username.trim(),
         realName: data.username.trim(),
-        role: '普通用户',
+        role: selectedRole,
+        roleName: roleNameMap[selectedRole],
         userId: Math.random().toString(36).slice(2)
       }
     }
@@ -120,7 +138,8 @@ export async function register(data: RegisterPayload): Promise<void> {
     password: data.password,
     email: data.email,
     realName: data.username,
-    role: '普通用户'
+    role: 'employee',
+    roleName: '普通员工'
   }
 }
 

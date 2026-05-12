@@ -36,6 +36,41 @@
       <!-- 分割线 -->
       <div class="divider"><span>账号登录</span></div>
 
+      <!-- 角色选择 -->
+      <div class="role-selector">
+        <label class="role-label">选择您的角色</label>
+        <div class="role-options">
+          <div
+            v-for="role in roleOptions"
+            :key="role.value"
+            class="role-option"
+            :class="{ active: selectedRole === role.value }"
+            @click="selectedRole = role.value"
+          >
+            <div class="role-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path v-if="role.value === 'employee'" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle v-if="role.value === 'employee'" cx="12" cy="7" r="4"/>
+                <path v-if="role.value === 'manager'" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle v-if="role.value === 'manager'" cx="9" cy="7" r="4"/>
+                <path v-if="role.value === 'manager'" d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path v-if="role.value === 'manager'" d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                <path v-if="role.value === 'director'" d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path v-if="role.value === 'director'" d="M2 17l10 5 10-5"/>
+                <path v-if="role.value === 'director'" d="M2 12l10 5 10-5"/>
+                <path v-if="role.value === 'admin'" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path v-if="role.value === 'admin'" d="M12 8v4"/>
+                <path v-if="role.value === 'admin'" d="M12 16h.01"/>
+              </svg>
+            </div>
+            <div class="role-info">
+              <span class="role-name">{{ role.label }}</span>
+              <span class="role-desc">{{ role.desc }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 伪登录提示 -->
       <div class="mock-tip">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -43,7 +78,7 @@
           <line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        <span>演示模式：<strong>admin / admin123</strong> 或 <strong>demo / demo123</strong>，也可用任意账号（密码≥6位）</span>
+        <span>演示模式：选择角色后，任意账号（密码≥6位）即可登录</span>
       </div>
 
       <!-- 表单 -->
@@ -172,20 +207,30 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authUtil } from '@/utils/auth'
 import { login as apiLogin } from '@/api/auth'
+import type { UserRole } from '@/types/auth'
 
 const router = useRouter()
-const route  = useRoute()
+const route = useRoute()
 
-const username    = ref<string>('')
-const password    = ref<string>('')
-const rememberMe  = ref<boolean>(false)
-const showPwd     = ref<boolean>(false)
-const loading     = ref<boolean>(false)
-const isShaking   = ref<boolean>(false)
+// 角色选项
+const roleOptions = [
+  { value: 'employee' as UserRole, label: '普通员工', desc: '发起申请、查看个人订单' },
+  { value: 'manager' as UserRole, label: '部门主管', desc: '审批本部门流程、查看部门报表' },
+  { value: 'director' as UserRole, label: '董事经理', desc: '接收审批各部门流程、查看全公司报表' },
+  { value: 'admin' as UserRole, label: '系统管理员', desc: '用户管理、权限分配、数据备份' }
+]
+
+const selectedRole = ref<UserRole>('employee')
+const username = ref<string>('')
+const password = ref<string>('')
+const rememberMe = ref<boolean>(false)
+const showPwd = ref<boolean>(false)
+const loading = ref<boolean>(false)
+const isShaking = ref<boolean>(false)
 const globalError = ref<string>('')
 
 const fieldErrors = reactive<{ username: string; password: string }>({ username: '', password: '' })
-const fieldValid  = reactive<{ username: boolean }>({ username: false })
+const fieldValid = reactive<{ username: boolean }>({ username: false })
 
 const validateUsername = (): void => {
   if (!username.value.trim()) {
@@ -214,21 +259,26 @@ const handleLogin = async (): Promise<void> => {
   globalError.value = ''
 
   if (!username.value.trim()) { fieldErrors.username = '请输入用户名'; shake(); return }
-  if (!password.value)        { fieldErrors.password = '请输入密码';   shake(); return }
+  if (!password.value) { fieldErrors.password = '请输入密码'; shake(); return }
 
   loading.value = true
   try {
-    const res = await apiLogin({ username: username.value.trim(), password: password.value })
+    const res = await apiLogin({ 
+      username: username.value.trim(), 
+      password: password.value,
+      role: selectedRole.value 
+    })
     const loginData = res.data
     authUtil.setToken(loginData.token)
     authUtil.setUserInfo({
       username: loginData.username,
       realName: loginData.realName || loginData.username,
-      role: loginData.role || '普通用户',
+      role: selectedRole.value,
+      roleName: roleOptions.find(r => r.value === selectedRole.value)?.label || '普通员工',
       userId: loginData.userId
     })
     const redirectPath = route.query.redirect as string | undefined
-    router.push(redirectPath ? redirectPath : { name: 'Home' })
+    router.push(redirectPath ? redirectPath : { name: 'Dashboard' })
   } catch (e) {
     setError((e as Error).message || '登录失败，请检查用户名和密码')
   } finally {
@@ -237,17 +287,17 @@ const handleLogin = async (): Promise<void> => {
 }
 
 const goRegister = () => router.push({ name: 'Register' })
-const goForgot   = () => router.push({ name: 'ForgotPassword' })
+const goForgot = () => router.push({ name: 'ForgotPassword' })
 
 // 粒子样式一次性生成
 const particleStyles = Array.from({ length: 25 }, () => ({
-  width:             `${Math.random() * 6 + 2}px`,
-  height:            `${Math.random() * 6 + 2}px`,
-  left:              `${Math.random() * 100}%`,
-  top:               `${Math.random() * 100}%`,
+  width: `${Math.random() * 6 + 2}px`,
+  height: `${Math.random() * 6 + 2}px`,
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
   animationDuration: `${Math.random() * 20 + 12}s`,
-  animationDelay:    `${Math.random() * 8}s`,
-  opacity:           `${Math.random() * 0.5 + 0.2}`
+  animationDelay: `${Math.random() * 8}s`,
+  opacity: `${Math.random() * 0.5 + 0.2}`
 }))
 </script>
 
@@ -285,8 +335,8 @@ const particleStyles = Array.from({ length: 25 }, () => ({
 .orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(0,200,200,0.2), transparent 70%); top: 50%; left: 60%; animation-duration: 22s; animation-delay: -8s; }
 @keyframes orbFloat {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33%       { transform: translate(30px, -30px) scale(1.05); }
-  66%       { transform: translate(-20px, 20px) scale(0.95); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
 }
 
 /* ─── 粒子 ───────────────────────────────────────  */
@@ -299,17 +349,17 @@ const particleStyles = Array.from({ length: 25 }, () => ({
   filter: blur(0.5px);
 }
 @keyframes floatUp {
-  0%   { transform: translateY(0) translateX(0);   opacity: 0; }
-  10%  { opacity: 0.4; }
-  90%  { opacity: 0.2; }
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.2; }
   100% { transform: translateY(-100vh) translateX(15px); opacity: 0; }
 }
 
 /* ─── 登录卡片 ───────────────────────────────────  */
 .login-card {
   position: relative;
-  width: 440px;
-  padding: 44px 42px 36px;
+  width: 480px;
+  padding: 40px 40px 32px;
   background: rgba(255,255,255,0.055);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -330,16 +380,83 @@ const particleStyles = Array.from({ length: 25 }, () => ({
 }
 
 /* ─── 品牌区 ─────────────────────────────────────  */
-.brand-area { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.brand-area { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
 .brand-logo svg { width: 48px; height: 48px; border-radius: 14px; filter: drop-shadow(0 4px 12px rgba(0,112,243,0.4)); }
 .brand-name { font-size: 20px; font-weight: 700; margin: 0 0 3px; background: linear-gradient(135deg, #fff 30%, #88bbff); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: 0.5px; }
 .brand-slogan { font-size: 12px; color: rgba(255,255,255,0.45); margin: 0; letter-spacing: 0.3px; }
 
 /* ─── 分割线 ─────────────────────────────────────  */
 .divider {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
   &::before, &::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
   span { font-size: 12px; color: rgba(255,255,255,0.35); white-space: nowrap; letter-spacing: 1px; }
+}
+
+/* ─── 角色选择器 ─────────────────────────────────  */
+.role-selector {
+  margin-bottom: 20px;
+}
+.role-label {
+  display: block;
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+.role-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  &:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+  }
+  &.active {
+    background: rgba(0,112,243,0.15);
+    border-color: rgba(0,112,243,0.6);
+    box-shadow: 0 0 0 3px rgba(0,112,243,0.1);
+  }
+}
+.role-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  flex-shrink: 0;
+  svg { width: 18px; height: 18px; color: rgba(255,255,255,0.7); }
+  .active & {
+    background: rgba(0,112,243,0.25);
+    svg { color: #55ccff; }
+  }
+}
+.role-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.role-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+.role-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.3;
 }
 
 /* ─── 伪登录提示 ─────────────────────────────────  */
@@ -352,10 +469,9 @@ const particleStyles = Array.from({ length: 25 }, () => ({
   background: rgba(255,200,0,0.07);
   border: 1px solid rgba(255,200,0,0.2);
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   margin-bottom: 20px;
   svg { width: 14px; height: 14px; flex-shrink: 0; color: #ffd166; margin-top: 1px; }
-  strong { color: #ffd166; }
 }
 
 /* ─── 字段包裹 ───────────────────────────────────  */
@@ -363,15 +479,15 @@ const particleStyles = Array.from({ length: 25 }, () => ({
   position: relative;
   display: flex;
   align-items: center;
-  height: 56px;
+  height: 54px;
   background: rgba(255,255,255,0.07);
   border: 1.5px solid rgba(255,255,255,0.12);
   border-radius: 14px;
   transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   &:focus-within { border-color: rgba(0,170,255,0.7); background: rgba(0,170,255,0.06); box-shadow: 0 0 0 3px rgba(0,170,255,0.15); }
   &.has-error { border-color: rgba(255,107,107,0.7); box-shadow: 0 0 0 3px rgba(255,107,107,0.12); margin-bottom: 4px; }
-  &.is-valid  { border-color: rgba(6,214,160,0.55); }
+  &.is-valid { border-color: rgba(6,214,160,0.55); }
 }
 .field-icon { width: 44px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; svg { width: 18px; height: 18px; color: rgba(255,255,255,0.35); transition: color 0.2s; } }
 .field-wrap:focus-within .field-icon svg { color: rgba(0,170,255,0.7); }
@@ -396,7 +512,7 @@ const particleStyles = Array.from({ length: 25 }, () => ({
   svg { width: 17px; height: 17px; }
   &:hover { color: rgba(255,255,255,0.85); }
 }
-.field-err { font-size: 12px; color: #ff7e7e; margin: 0 0 16px 6px; animation: fadeSlideIn 0.2s ease; line-height: 1.4; }
+.field-err { font-size: 12px; color: #ff7e7e; margin: 0 0 12px 6px; animation: fadeSlideIn 0.2s ease; line-height: 1.4; }
 @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ─── 功能行 ─────────────────────────────────────  */
@@ -458,8 +574,9 @@ const particleStyles = Array.from({ length: 25 }, () => ({
 }
 
 /* ─── 响应式 ─────────────────────────────────────  */
-@media (max-width: 500px) {
-  .login-card { width: 88%; padding: 36px 24px 28px; }
+@media (max-width: 520px) {
+  .login-card { width: 92%; padding: 32px 20px 24px; }
   .brand-name { font-size: 18px; }
+  .role-options { grid-template-columns: 1fr; }
 }
 </style>

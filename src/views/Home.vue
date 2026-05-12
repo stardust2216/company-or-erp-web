@@ -84,6 +84,7 @@
             <el-radio-group v-model="orderTimeRange" size="small">
               <el-radio-button label="week">本周</el-radio-button>
               <el-radio-button label="month">本月</el-radio-button>
+              <el-radio-button label="halfYear">半年</el-radio-button>
               <el-radio-button label="year">本年</el-radio-button>
             </el-radio-group>
           </div>
@@ -97,6 +98,7 @@
       <div class="chart-card chart-side">
         <div class="chart-header">
           <h3 class="chart-title">部门业绩占比</h3>
+          <span class="chart-subtitle">{{ deptChartPeriodLabel }}</span>
         </div>
         <div class="chart-body">
           <v-chart :option="deptPieOption" autoresize style="height: 280px" />
@@ -253,8 +255,78 @@ const currentDate = computed(() => {
   return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()]}`
 })
 
-// 时间范围
-const orderTimeRange = ref('month')
+// 订单趋势时间范围（与部门业绩联动）
+type OrderTimeRange = 'week' | 'month' | 'halfYear' | 'year'
+
+const orderTimeRange = ref<OrderTimeRange>('month')
+
+/** 伪数据：各时间维度下的订单趋势（横轴 + 双折线） */
+const mockOrderTrendByRange: Record<
+  OrderTimeRange,
+  { categories: string[]; orders: number[]; completed: number[] }
+> = {
+  week: {
+    categories: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+    orders: [42, 55, 48, 61, 73, 38, 29],
+    completed: [36, 48, 42, 54, 65, 32, 24]
+  },
+  month: {
+    categories: ['第1周', '第2周', '第3周', '第4周'],
+    orders: [186, 214, 198, 236],
+    completed: [162, 188, 172, 205]
+  },
+  halfYear: {
+    categories: ['1月', '2月', '3月', '4月', '5月', '6月'],
+    orders: [820, 765, 902, 880, 940, 1010],
+    completed: [710, 668, 788, 762, 815, 876]
+  },
+  year: {
+    categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    orders: [720, 680, 810, 790, 860, 920, 880, 910, 870, 940, 980, 1050],
+    completed: [620, 590, 700, 685, 740, 795, 760, 780, 750, 810, 840, 900]
+  }
+}
+
+/** 伪数据：与左侧时间范围对应的部门业绩（万元，饼图数值） */
+const mockDeptPerformanceByRange: Record<
+  OrderTimeRange,
+  { value: number; name: string; color: string }[]
+> = {
+  week: [
+    { value: 8.6, name: '销售一部', color: '#0070f3' },
+    { value: 6.2, name: '销售二部', color: '#06d6a0' },
+    { value: 4.1, name: '销售三部', color: '#ff9500' },
+    { value: 2.4, name: '其他', color: '#8c8c8c' }
+  ],
+  month: [
+    { value: 45, name: '销售一部', color: '#0070f3' },
+    { value: 28, name: '销售二部', color: '#06d6a0' },
+    { value: 15, name: '销售三部', color: '#ff9500' },
+    { value: 12, name: '其他', color: '#8c8c8c' }
+  ],
+  halfYear: [
+    { value: 128, name: '销售一部', color: '#0070f3' },
+    { value: 96, name: '销售二部', color: '#06d6a0' },
+    { value: 62, name: '销售三部', color: '#ff9500' },
+    { value: 41, name: '其他', color: '#8c8c8c' }
+  ],
+  year: [
+    { value: 286, name: '销售一部', color: '#0070f3' },
+    { value: 198, name: '销售二部', color: '#06d6a0' },
+    { value: 142, name: '销售三部', color: '#ff9500' },
+    { value: 84, name: '其他', color: '#8c8c8c' }
+  ]
+}
+
+const deptChartPeriodLabel = computed(() => {
+  const map: Record<OrderTimeRange, string> = {
+    week: '本周',
+    month: '本月',
+    halfYear: '近半年',
+    year: '本年'
+  }
+  return map[orderTimeRange.value]
+})
 
 // 统计数据
 const stats = ref({
@@ -278,118 +350,129 @@ const recentOrders = ref([
   { id: 3, orderNo: 'ORD-20240501-003', customer: '华维食品添加剂', amount: 42300, status: 'completed' }
 ])
 
-// 订单趋势图配置
-const orderTrendOption = computed(() => ({
-  tooltip: {
-    trigger: 'axis',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#e8e8e8',
-    textStyle: { color: '#333' }
-  },
-  legend: {
-    data: ['订单数', '完成数'],
-    bottom: 0
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '10%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'category',
-    boundaryGap: false,
-    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'],
-    axisLine: { lineStyle: { color: '#e8e8e8' } },
-    axisLabel: { color: '#666' }
-  },
-  yAxis: {
-    type: 'value',
-    axisLine: { show: false },
-    splitLine: { lineStyle: { color: '#f5f5f5' } },
-    axisLabel: { color: '#666' }
-  },
-  series: [
-    {
-      name: '订单数',
-      type: 'line',
-      smooth: true,
-      data: [820, 932, 901, 1234, 1290, 1330, 1520],
-      areaStyle: {
-        color: {
-          type: 'linear',
-          x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: 'rgba(0, 112, 243, 0.3)' },
-            { offset: 1, color: 'rgba(0, 112, 243, 0.05)' }
-          ]
-        }
-      },
-      lineStyle: { color: '#0070f3', width: 2 },
-      itemStyle: { color: '#0070f3' }
+// 订单趋势图配置（随时间范围切换伪数据）
+const orderTrendOption = computed(() => {
+  const { categories, orders, completed } = mockOrderTrendByRange[orderTimeRange.value]
+  return {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e8e8e8',
+      textStyle: { color: '#333' }
     },
-    {
-      name: '完成数',
-      type: 'line',
-      smooth: true,
-      data: [620, 732, 791, 934, 1090, 1130, 1320],
-      areaStyle: {
-        color: {
-          type: 'linear',
-          x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: 'rgba(6, 214, 160, 0.3)' },
-            { offset: 1, color: 'rgba(6, 214, 160, 0.05)' }
-          ]
-        }
+    legend: {
+      data: ['订单数', '完成数'],
+      bottom: 0
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: categories,
+      axisLine: { lineStyle: { color: '#e8e8e8' } },
+      axisLabel: { color: '#666' }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: '#f5f5f5' } },
+      axisLabel: { color: '#666' }
+    },
+    series: [
+      {
+        name: '订单数',
+        type: 'line',
+        smooth: true,
+        data: orders,
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(0, 112, 243, 0.3)' },
+              { offset: 1, color: 'rgba(0, 112, 243, 0.05)' }
+            ]
+          }
+        },
+        lineStyle: { color: '#0070f3', width: 2 },
+        itemStyle: { color: '#0070f3' }
       },
-      lineStyle: { color: '#06d6a0', width: 2 },
-      itemStyle: { color: '#06d6a0' }
-    }
-  ]
-}))
+      {
+        name: '完成数',
+        type: 'line',
+        smooth: true,
+        data: completed,
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(6, 214, 160, 0.3)' },
+              { offset: 1, color: 'rgba(6, 214, 160, 0.05)' }
+            ]
+          }
+        },
+        lineStyle: { color: '#06d6a0', width: 2 },
+        itemStyle: { color: '#06d6a0' }
+      }
+    ]
+  }
+})
 
-// 部门业绩饼图配置
-const deptPieOption = computed(() => ({
-  tooltip: {
-    trigger: 'item',
-    formatter: '{b}: {c}万 ({d}%)',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#e8e8e8',
-    textStyle: { color: '#333' }
-  },
-  legend: {
-    orient: 'vertical',
-    right: '5%',
-    top: 'center',
-    textStyle: { color: '#666' }
-  },
-  series: [
-    {
-      name: '部门业绩',
-      type: 'pie',
-      radius: ['45%', '70%'],
-      center: ['35%', '50%'],
-      avoidLabelOverlap: false,
-      itemStyle: {
-        borderRadius: 8,
-        borderColor: '#fff',
-        borderWidth: 2
-      },
-      label: { show: false },
-      emphasis: {
-        label: { show: true, fontSize: 14, fontWeight: 'bold' }
-      },
-      data: [
-        { value: 45, name: '销售一部', itemStyle: { color: '#0070f3' } },
-        { value: 28, name: '销售二部', itemStyle: { color: '#06d6a0' } },
-        { value: 15, name: '销售三部', itemStyle: { color: '#ff9500' } },
-        { value: 12, name: '其他', itemStyle: { color: '#8c8c8c' } }
-      ]
-    }
-  ]
-}))
+// 部门业绩饼图（与左侧时间范围联动）
+const deptPieOption = computed(() => {
+  const rows = mockDeptPerformanceByRange[orderTimeRange.value]
+  return {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c}万 ({d}%)',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e8e8e8',
+      textStyle: { color: '#333' }
+    },
+    legend: {
+      orient: 'vertical',
+      right: '5%',
+      top: 'center',
+      textStyle: { color: '#666' }
+    },
+    series: [
+      {
+        name: '部门业绩',
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 8,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: { show: false },
+        emphasis: {
+          label: { show: true, fontSize: 14, fontWeight: 'bold' }
+        },
+        data: rows.map((d) => ({
+          value: d.value,
+          name: d.name,
+          itemStyle: { color: d.color }
+        }))
+      }
+    ]
+  }
+})
 
 // 获取订单状态
 function getOrderStatus(status: string): string {
@@ -611,6 +694,15 @@ function getOrderStatusType(status: string): '' | 'warning' | 'success' | 'info'
       font-weight: 600;
       color: #1a1a2e;
       margin: 0;
+    }
+    
+    .chart-subtitle {
+      font-size: 12px;
+      color: #8c8c8c;
+      font-weight: 500;
+      padding: 4px 10px;
+      background: #f5f7fa;
+      border-radius: 6px;
     }
   }
   

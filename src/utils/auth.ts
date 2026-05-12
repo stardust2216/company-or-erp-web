@@ -1,15 +1,21 @@
 // src/utils/auth.ts
 // Token 管理工具
 
+import type { UserRole } from '@/types/auth'
+
 const TOKEN_KEY = 'erp_temp_token'
 const RESET_TOKEN_KEY = 'erp_reset_token'
 const USER_INFO_KEY = 'erp_user_info'
 
-export interface UserInfo {
+export interface AuthUserInfo {
+  userId: string | number
   username: string
   realName: string
-  role: string
-  userId: string | number
+  role: UserRole
+  roleName: string
+  department?: string
+  subsidiaryId?: string
+  avatar?: string
 }
 
 export const authUtil = {
@@ -36,16 +42,16 @@ export const authUtil = {
     sessionStorage.removeItem(RESET_TOKEN_KEY)
   },
 
-  getUserInfo(): UserInfo | null {
+  getUserInfo(): AuthUserInfo | null {
     const raw = localStorage.getItem(USER_INFO_KEY)
     if (!raw) return null
     try {
-      return JSON.parse(raw) as UserInfo
+      return JSON.parse(raw) as AuthUserInfo
     } catch {
       return null
     }
   },
-  setUserInfo(info: UserInfo): void {
+  setUserInfo(info: AuthUserInfo): void {
     localStorage.setItem(USER_INFO_KEY, JSON.stringify(info))
   },
   removeUserInfo(): void {
@@ -55,5 +61,9 @@ export const authUtil = {
   logout(): void {
     this.removeToken()
     this.removeUserInfo()
+  },
+
+  clearAuth(): void {
+    this.logout()
   }
 }

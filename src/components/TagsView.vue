@@ -33,7 +33,7 @@
             :index="item.path"
             @click="handleTopMenuClick(item)"
           >
-            <el-icon><component :is="item.icon" /></el-icon>
+            <el-icon><component :is="resolveMenuIcon(item.icon)" /></el-icon>
             <span>{{ item.title }}</span>
           </el-menu-item>
         </el-menu>
@@ -42,15 +42,25 @@
       <div class="header-right">
         <div class="header-actions">
           <el-tooltip content="全屏" placement="bottom">
-            <el-icon class="action-icon fullscreen-icon" @click="toggleFullscreen">
-              <FullScreen />
-            </el-icon>
+            <button
+              type="button"
+              class="header-action-btn"
+              aria-label="全屏"
+              @click="toggleFullscreen"
+            >
+              <el-icon :size="18"><FullScreen /></el-icon>
+            </button>
           </el-tooltip>
           <el-tooltip content="消息" placement="bottom">
             <el-badge :value="3" :max="99" class="action-badge">
-              <el-icon class="action-icon message-icon" @click="showNotification">
-                <Bell />
-              </el-icon>
+              <button
+                type="button"
+                class="header-action-btn"
+                aria-label="消息"
+                @click="showNotification"
+              >
+                <el-icon :size="18"><Bell /></el-icon>
+              </button>
             </el-badge>
           </el-tooltip>
         </div>
@@ -89,7 +99,11 @@
       <aside class="sidebar" :class="{ 'is-collapse': isSidebarCollapsed }">
         <!-- 收缩时显示的主标签图标 -->
         <div v-if="isSidebarCollapsed" class="sidebar-collapse-logo" @click="handleLogoClick">
-          <el-icon :size="24"><Odometer /></el-icon>
+          <el-tooltip :content="currentTopMenuTitle" placement="right">
+            <el-icon :size="22">
+              <component :is="resolveMenuIcon(currentTopMenuIconName)" />
+            </el-icon>
+          </el-tooltip>
         </div>
         
         <el-menu
@@ -99,23 +113,46 @@
           class="sidebar-menu"
           @select="handleSidebarSelect"
         >
-          <template v-for="item in sidebarMenus" :key="item.path">
-            <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path">
+          <template v-for="item in currentSidebarMenus" :key="item.path">
+            <!-- 三级：有子菜单（公司级） -->
+            <el-sub-menu
+              v-if="item.children && item.children.length > 0"
+              :index="item.path"
+            >
               <template #title>
-                <el-icon><component :is="item.icon || 'Folder'" /></el-icon>
+                <el-icon><component :is="resolveMenuIcon(item.icon)" /></el-icon>
                 <span>{{ item.title }}</span>
               </template>
-              <el-menu-item
-                v-for="child in item.children"
-                :key="child.path"
-                :index="child.path"
-              >
-                <el-icon v-if="child.icon"><component :is="child.icon" /></el-icon>
-                <span>{{ child.title }}</span>
-              </el-menu-item>
+              <!-- 二级子项 -->
+              <template v-for="child in item.children" :key="child.path">
+                <!-- 子项还有子菜单（三级菜单） -->
+                <el-sub-menu
+                  v-if="child.children && child.children.length > 0"
+                  :index="child.path"
+                >
+                  <template #title>
+                    <el-icon><component :is="resolveMenuIcon(child.icon)" /></el-icon>
+                    <span>{{ child.title }}</span>
+                  </template>
+                  <el-menu-item
+                    v-for="leaf in child.children"
+                    :key="leaf.path"
+                    :index="leaf.path"
+                  >
+                    <el-icon><component :is="resolveMenuIcon(leaf.icon)" /></el-icon>
+                    <span>{{ leaf.title }}</span>
+                  </el-menu-item>
+                </el-sub-menu>
+                <!-- 子项无子菜单（叶子节点） -->
+                <el-menu-item v-else :index="child.path">
+                  <el-icon><component :is="resolveMenuIcon(child.icon)" /></el-icon>
+                  <span>{{ child.title }}</span>
+                </el-menu-item>
+              </template>
             </el-sub-menu>
+            <!-- 顶层叶子节点 -->
             <el-menu-item v-else :index="item.path">
-              <el-icon><component :is="item.icon || 'Document'" /></el-icon>
+              <el-icon><component :is="resolveMenuIcon(item.icon)" /></el-icon>
               <span>{{ item.title }}</span>
             </el-menu-item>
           </template>
@@ -143,7 +180,12 @@
                 :class="{ 'is-active': isActiveTag(tag) }"
                 @contextmenu.prevent="openContextMenu($event, tag)"
               >
-                <span class="tag-title">{{ tag.title }}</span>
+                <span class="tag-main">
+                  <el-icon class="tag-icon">
+                    <component :is="resolveMenuIcon(tag.icon)" />
+                  </el-icon>
+                  <span class="tag-title">{{ tag.title }}</span>
+                </span>
                 <el-icon
                   v-if="!tag.meta?.affix"
                   class="tag-close"
@@ -214,7 +256,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import type { Component } from 'vue'
+import * as ElementPlusIcons from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
@@ -249,6 +293,7 @@ interface TagView {
   path: string
   name: string
   title: string
+  icon?: string
   meta?: Record<string, any>
 }
 
@@ -274,74 +319,190 @@ const contextMenuLeft = ref(0)
 const contextMenuTop = ref(0)
 const selectedTag = ref<TagView | null>(null)
 
+const currentTopMenu = computed(() =>
+  topMenus.value.find((item) => item.path === activeTopMenu.value)
+)
+const currentTopMenuIconName = computed(() => currentTopMenu.value?.icon || 'Odometer')
+const currentTopMenuTitle = computed(() => currentTopMenu.value?.title || '工作台')
+
+// 根据当前顶部菜单过滤侧边栏，展示当前模块的菜单项
+const currentSidebarMenus = computed(() => {
+  const activePath = activeTopMenu.value
+  if (activePath === '/dashboard') {
+    return sidebarMenus.value.filter(m => m.path === '/dashboard')
+  }
+  const matched = sidebarMenus.value.find(m => m.path === activePath)
+  if (matched) {
+    // 返回该模块的子菜单列表（展平到一层，子公司作为二级）
+    return matched.children || [matched]
+  }
+  return sidebarMenus.value
+})
+
+function resolveMenuIcon(name?: string): Component {
+  if (!name) return ElementPlusIcons.Document
+  const comp = (ElementPlusIcons as Record<string, Component>)[name]
+  return comp || ElementPlusIcons.Document
+}
+
 // ============================================
 // Menu Data - 按功能模块分类
 // ============================================
 
 const topMenus = ref<MenuItem[]>([
-  { path: '/dashboard', name: 'Dashboard', title: '工作台', icon: 'Odometer' },
-  { path: '/business', name: 'Business', title: '核心业务', icon: 'ShoppingCart' },
-  { path: '/approval', name: 'Approval', title: '审批流程', icon: 'Document' },
-  { path: '/reports', name: 'Reports', title: '数据报表', icon: 'DataLine' },
-  { path: '/system', name: 'System', title: '系统管理', icon: 'Setting' }
+  { path: '/dashboard', name: 'Dashboard', title: '工作台',  icon: 'Odometer'     },
+  { path: '/business',  name: 'Business',  title: '核心业务', icon: 'Grid'         },
+  { path: '/approval',  name: 'Approval',  title: '审批流程', icon: 'Stamp'        },
+  { path: '/reports',   name: 'Reports',   title: '数据报表', icon: 'DataLine'     },
+  { path: '/analytics', name: 'Analytics', title: '经营分析', icon: 'TrendCharts'  },
+  { path: '/system',    name: 'System',    title: '系统管理', icon: 'Setting'      }
 ])
 
+// ── 侧边栏菜单（支持三级，按顶部菜单区分）──
 const sidebarMenus = ref<MenuItem[]>([
+  // ═══ 工作台 ═══════════════════════════════
+  { path: '/dashboard', name: 'Dashboard', title: '工作台', icon: 'Odometer' },
+
+  // ═══ 核心业务 ══════════════════════════════
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    title: '工作台',
-    icon: 'Odometer'
-  },
-  // 核心业务模块
-  {
-    path: '/business',
-    name: 'Business',
-    title: '核心业务',
-    icon: 'ShoppingCart',
+    path: '/business', name: 'Business', title: '核心业务', icon: 'Grid',
     children: [
-      { path: '/business/orders', name: 'Orders', title: '订单管理', icon: 'Document' },
+      // 🏭 亚辉塑业
+      {
+        path: '/business/yahui', name: 'Yahui', title: '亚辉塑业', icon: 'OfficeBuilding',
+        children: [
+          { path: '/business/yahui/orders',          name: 'YahuiOrderList',      title: '订单列表',   icon: 'Document'  },
+          { path: '/business/yahui/production-plan', name: 'YahuiProductionPlan', title: '生产计划单', icon: 'SetUp'     },
+          { path: '/business/yahui/order-stats',     name: 'YahuiOrderStats',     title: '订单统计',   icon: 'DataLine'  }
+        ]
+      },
+      // 🏭 龙州塑业
+      {
+        path: '/business/longzhou', name: 'Longzhou', title: '龙州塑业', icon: 'OfficeBuilding',
+        children: [
+          { path: '/business/longzhou/orders',          name: 'LongzhouOrderList',      title: '订单列表',   icon: 'Document' },
+          { path: '/business/longzhou/production-plan', name: 'LongzhouProductionPlan', title: '生产计划单', icon: 'SetUp'    },
+          { path: '/business/longzhou/order-stats',     name: 'LongzhouOrderStats',     title: '订单统计',   icon: 'DataLine' }
+        ]
+      },
+      // 🧪 华维食品
+      {
+        path: '/business/huawei', name: 'Huawei', title: '华维食品', icon: 'OfficeBuilding',
+        children: [
+          { path: '/business/huawei/orders',             name: 'HuaweiOrderList',         title: '订单列表',   icon: 'Document'        },
+          { path: '/business/huawei/purchase-contracts', name: 'HuaweiPurchaseContracts', title: '采购合同',   icon: 'DocumentChecked' },
+          { path: '/business/huawei/sales-contracts',    name: 'HuaweiSalesContracts',    title: '销售合同',   icon: 'DocumentChecked' },
+          { path: '/business/huawei/warehouse',          name: 'HuaweiWarehouse',         title: '入出库明细', icon: 'Box'             }
+        ]
+      },
+      // 🔬 广为科技
+      {
+        path: '/business/guangwei', name: 'Guangwei', title: '广为科技', icon: 'OfficeBuilding',
+        children: [
+          { path: '/business/guangwei/orders',             name: 'GuangweiOrderList',         title: '订单列表',   icon: 'Document'        },
+          { path: '/business/guangwei/purchase-contracts', name: 'GuangweiPurchaseContracts', title: '采购合同',   icon: 'DocumentChecked' },
+          { path: '/business/guangwei/sales-contracts',    name: 'GuangweiSalesContracts',    title: '销售合同',   icon: 'DocumentChecked' },
+          { path: '/business/guangwei/warehouse',          name: 'GuangweiWarehouse',         title: '入出库明细', icon: 'Box'             }
+        ]
+      },
+      // 公共管理
       { path: '/business/customers', name: 'Customers', title: '客户管理', icon: 'UserFilled' },
-      { path: '/business/inventory', name: 'Inventory', title: '库存管理', icon: 'Box' },
-      { path: '/business/production', name: 'Production', title: '生产计划', icon: 'Briefcase' }
+      { path: '/business/inventory', name: 'Inventory', title: '库存管理', icon: 'Box'        }
     ]
   },
-  // 审批流程模块
+
+  // ═══ 审批流程 ══════════════════════════════
   {
-    path: '/approval',
-    name: 'Approval',
-    title: '审批流程',
-    icon: 'Document',
+    path: '/approval', name: 'Approval', title: '审批流程', icon: 'Stamp',
     children: [
-      { path: '/approval/pending', name: 'ApprovalPending', title: '待办事项', icon: 'Clock' },
-      { path: '/approval/done', name: 'ApprovalDone', title: '已办事项', icon: 'CircleCheck' },
-      { path: '/approval/my-apply', name: 'MyApply', title: '我的申请', icon: 'List' },
-      { path: '/approval/start', name: 'StartApproval', title: '发起申请', icon: 'Edit' }
+      { path: '/approval/pending',  name: 'ApprovalPending', title: '待办事项', icon: 'Clock'       },
+      { path: '/approval/done',     name: 'ApprovalDone',    title: '已办事项', icon: 'CircleCheck' },
+      { path: '/approval/my-apply', name: 'ApprovalMyApply', title: '我的申请', icon: 'List'        },
+      { path: '/approval/start',    name: 'ApprovalStart',   title: '发起申请', icon: 'Edit'        }
     ]
   },
-  // 数据报表模块
+
+  // ═══ 数据报表 ══════════════════════════════
   {
-    path: '/reports',
-    name: 'Reports',
-    title: '数据报表',
-    icon: 'DataLine',
+    path: '/reports', name: 'Reports', title: '数据报表', icon: 'DataLine',
     children: [
-      { path: '/reports/output', name: 'OutputReport', title: '产量产值报表', icon: 'DataLine' },
-      { path: '/reports/department', name: 'DeptReport', title: '部门订单报表', icon: 'Box' },
-      { path: '/reports/company', name: 'CompanyReport', title: '全公司报表', icon: 'Coin' }
+      // 🏭 亚辉塑业报表
+      {
+        path: '/reports/yahui', name: 'YahuiReports', title: '亚辉塑业', icon: 'OfficeBuilding',
+        children: [
+          { path: '/reports/yahui/order-a',          name: 'YahuiOrderReportA',    title: '订单报表A',      icon: 'Document'    },
+          { path: '/reports/yahui/order-b',          name: 'YahuiOrderReportB',    title: '订单报表B',      icon: 'Document'    },
+          { path: '/reports/yahui/order-c',          name: 'YahuiOrderReportC',    title: '订单报表C',      icon: 'Document'    },
+          { path: '/reports/yahui/production-daily', name: 'YahuiProductionDaily', title: '生产日报(8工序)', icon: 'SetUp'       },
+          { path: '/reports/yahui/stock-fabric',     name: 'YahuiStockFabric',     title: '布筒库存',       icon: 'Box'         },
+          { path: '/reports/yahui/stock-material',   name: 'YahuiStockMaterial',   title: '原料库存',       icon: 'Box'         },
+          { path: '/reports/yahui/data-storage',     name: 'YahuiDataStorage',     title: '数据存储',       icon: 'FolderOpened'}
+        ]
+      },
+      // 🏭 龙州塑业报表
+      {
+        path: '/reports/longzhou', name: 'LongzhouReports', title: '龙州塑业', icon: 'OfficeBuilding',
+        children: [
+          { path: '/reports/longzhou/order',            name: 'LongzhouOrderReport',    title: '订单报表',       icon: 'Document' },
+          { path: '/reports/longzhou/production-daily', name: 'LongzhouProductionDaily',title: '生产日报(6工序)', icon: 'SetUp'    },
+          { path: '/reports/longzhou/stock',            name: 'LongzhouStock',          title: '库存报表',       icon: 'Box'      }
+        ]
+      },
+      // 🧪 华维食品报表
+      {
+        path: '/reports/huawei', name: 'HuaweiReports', title: '华维食品', icon: 'OfficeBuilding',
+        children: [
+          { path: '/reports/huawei/purchase-stats',   name: 'HuaweiPurchaseStats',   title: '采购合同统计', icon: 'DocumentChecked' },
+          { path: '/reports/huawei/inbound',          name: 'HuaweiInboundReport',   title: '入库明细',     icon: 'Download'        },
+          { path: '/reports/huawei/sales-stats',      name: 'HuaweiSalesStats',      title: '销售合同统计', icon: 'DocumentChecked' },
+          { path: '/reports/huawei/outbound',         name: 'HuaweiOutboundReport',  title: '出库明细',     icon: 'Upload'          },
+          { path: '/reports/huawei/production-daily', name: 'HuaweiProductionDaily', title: '生产日报',     icon: 'SetUp'           },
+          { path: '/reports/huawei/business-summary', name: 'HuaweiBusinessSummary', title: '工业生产经营', icon: 'TrendCharts'     }
+        ]
+      },
+      // 🔬 广为科技报表
+      {
+        path: '/reports/guangwei', name: 'GuangweiReports', title: '广为科技', icon: 'OfficeBuilding',
+        children: [
+          { path: '/reports/guangwei/phosphoric-purchase', name: 'GuangweiPhosphoricPurchase', title: '磷酸采购合同', icon: 'DocumentChecked' },
+          { path: '/reports/guangwei/phosphoric-sales',    name: 'GuangweiPhosphoricSales',    title: '磷酸销售合同', icon: 'DocumentChecked' },
+          { path: '/reports/guangwei/purchase-detail',     name: 'GuangweiPurchaseDetail',     title: '采购明细',     icon: 'Download'        },
+          { path: '/reports/guangwei/sales-detail',        name: 'GuangweiSalesDetail',        title: '销售明细',     icon: 'Upload'          }
+        ]
+      },
+      // 🏢 全公司报表
+      {
+        path: '/reports/company', name: 'CompanyReports', title: '全公司报表', icon: 'DataAnalysis',
+        children: [
+          { path: '/reports/company/overview',    name: 'CompanyOverview',    title: '经营总览',     icon: 'Odometer'       },
+          { path: '/reports/company/comparison',  name: 'CompanyComparison',  title: '四子公司对比', icon: 'ScaleToOriginal'},
+          { path: '/reports/company/consolidated',name: 'CompanyConsolidated',title: '合并报表',     icon: 'Tickets'        },
+          { path: '/reports/company/kpi',         name: 'CompanyKPI',         title: '核心指标看板', icon: 'Monitor'        }
+        ]
+      }
     ]
   },
-  // 系统管理模块
+
+  // ═══ 经营分析 ══════════════════════════════
   {
-    path: '/system',
-    name: 'System',
-    title: '系统管理',
-    icon: 'Setting',
+    path: '/analytics', name: 'Analytics', title: '经营分析', icon: 'TrendCharts',
     children: [
-      { path: '/system/users', name: 'UserManagement', title: '用户管理', icon: 'User' },
-      { path: '/system/roles', name: 'RoleManagement', title: '角色管理', icon: 'Key' },
-      { path: '/system/menus', name: 'MenuManagement', title: '菜单管理', icon: 'Menu' },
-      { path: '/system/backup', name: 'DataBackup', title: '数据备份', icon: 'Folder' }
+      { path: '/analytics/overview',   name: 'AnalyticsOverview',    title: '经营概览', icon: 'DataLine'       },
+      { path: '/analytics/production', name: 'ProductionAnalysis',   title: '产量分析', icon: 'Histogram'      },
+      { path: '/analytics/inventory',  name: 'InventoryAnalysis',    title: '库存分析', icon: 'PieChart'       },
+      { path: '/analytics/profit',     name: 'ProfitAnalysis',       title: '利润分析', icon: 'Coin'           },
+      { path: '/analytics/comparison', name: 'SubsidiaryComparison', title: '子公司对比',icon: 'ScaleToOriginal'}
+    ]
+  },
+
+  // ═══ 系统管理 ══════════════════════════════
+  {
+    path: '/system', name: 'System', title: '系统管理', icon: 'Setting',
+    children: [
+      { path: '/system/users',  name: 'UserManagement', title: '用户管理', icon: 'User'   },
+      { path: '/system/roles',  name: 'RoleManagement', title: '角色管理', icon: 'Key'    },
+      { path: '/system/menus',  name: 'MenuManagement', title: '菜单管理', icon: 'Menu'   },
+      { path: '/system/backup', name: 'DataBackup',     title: '数据备份', icon: 'Folder' }
     ]
   }
 ])
@@ -362,8 +523,19 @@ function handleLogoClick() {
 
 function handleTopMenuClick(item: MenuItem) {
   activeTopMenu.value = item.path
-  if (item.children && item.children.length > 0) {
-    router.push(item.children[0].path)
+  if (item.path === '/dashboard') {
+    router.push('/dashboard')
+    return
+  }
+  // 找到该模块在 sidebarMenus 中的条目，跳到第一个叶子节点
+  const sidebarItem = sidebarMenus.value.find(m => m.path === item.path)
+  if (sidebarItem?.children?.length) {
+    const first = sidebarItem.children[0]
+    if (first.children?.length) {
+      router.push(first.children[0].path)
+    } else {
+      router.push(first.path)
+    }
   } else {
     router.push(item.path)
   }
@@ -425,7 +597,10 @@ function isActiveTag(tag: TagView): boolean {
 }
 
 function addVisitedView(view: TagView) {
-  if (visitedViews.value.some(v => v.path === view.path)) {
+  const existing = visitedViews.value.find((v) => v.path === view.path)
+  if (existing) {
+    if (view.title) existing.title = view.title
+    if (view.icon && !existing.icon) existing.icon = view.icon
     return
   }
   visitedViews.value.push({ ...view })
@@ -483,6 +658,7 @@ watch(() => route.path, (newPath) => {
     path: newPath,
     name: route.name as string || '',
     title: (route.meta.title as string) || getMenuTitle(newPath),
+    icon: (route.meta.icon as string) || getMenuIcon(newPath),
     meta: route.meta
   })
   activeSidebarMenu.value = newPath
@@ -493,17 +669,39 @@ watch(() => route.path, (newPath) => {
   }
 })
 
-// 根据路径获取菜单标题
+// 根据路径获取菜单标题（支持三级）
 function getMenuTitle(path: string): string {
   for (const menu of sidebarMenus.value) {
     if (menu.path === path) return menu.title
     if (menu.children) {
       for (const child of menu.children) {
         if (child.path === path) return child.title
+        if (child.children) {
+          for (const leaf of child.children) {
+            if (leaf.path === path) return leaf.title
+          }
+        }
       }
     }
   }
-  return '未命名'
+  return route.meta.title as string || '未命名'
+}
+
+function getMenuIcon(path: string): string | undefined {
+  for (const menu of sidebarMenus.value) {
+    if (menu.path === path) return menu.icon
+    if (menu.children) {
+      for (const child of menu.children) {
+        if (child.path === path) return child.icon
+        if (child.children) {
+          for (const leaf of child.children) {
+            if (leaf.path === path) return leaf.icon
+          }
+        }
+      }
+    }
+  }
+  return route.meta.icon as string | undefined
 }
 
 watch(contextMenuVisible, (val) => {
@@ -524,6 +722,7 @@ onMounted(() => {
     path: route.path,
     name: route.name as string || '',
     title: (route.meta.title as string) || getMenuTitle(route.path),
+    icon: (route.meta.icon as string) || getMenuIcon(route.path),
     meta: route.meta
   })
   
@@ -548,7 +747,7 @@ onMounted(() => {
 
 $header-height: 60px;
 $tags-view-height: 42px;
-$sidebar-width: 220px;
+$sidebar-width: 240px;
 $sidebar-collapsed-width: 64px;
 
 // ============================================
@@ -679,34 +878,49 @@ $sidebar-collapsed-width: 64px;
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   
   .action-badge {
+    display: inline-flex;
+    align-items: center;
+    
     :deep(.el-badge__content) {
       background: #f56c6c;
       border: none;
     }
   }
   
-  .action-icon {
-    font-size: 18px;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.25s ease;
-    color: #666;
-    display: flex;
+  .header-action-btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    color: #606266;
+    transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
     
     &:hover {
-      background: rgba(0, 112, 243, 0.08);
       color: #0070f3;
-      transform: scale(1.05);
+      background: rgba(0, 112, 243, 0.1);
+      box-shadow: 0 1px 4px rgba(0, 112, 243, 0.12);
+    }
+    
+    &:focus-visible {
+      outline: none;
+      color: #0070f3;
+      background: rgba(0, 112, 243, 0.12);
+      box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.35);
     }
     
     &:active {
-      transform: scale(0.95);
+      transform: scale(0.94);
+      background: rgba(0, 112, 243, 0.14);
     }
   }
 }
@@ -806,7 +1020,7 @@ $sidebar-collapsed-width: 64px;
   cursor: pointer;
   color: #0070f3;
   border-bottom: 1px solid #e8e8e8;
-  transition: all 0.2s;
+  transition: background-color 0.2s ease, color 0.2s ease;
   
   &:hover {
     background: rgba(0, 112, 243, 0.08);
@@ -847,12 +1061,38 @@ $sidebar-collapsed-width: 64px;
   }
   
   .el-sub-menu {
-    .el-menu-item {
-      height: 44px;
-      line-height: 44px;
-      font-size: 13px;
-      margin: 1px 8px;
-      padding-left: 48px !important;
+    // 二级菜单项
+    > .el-menu {
+      > .el-menu-item,
+      > .el-sub-menu > .el-sub-menu__title {
+        height: 44px;
+        line-height: 44px;
+        font-size: 13px;
+        margin: 1px 8px;
+        padding-left: 40px !important;
+      }
+    }
+    // 三级菜单项
+    .el-sub-menu {
+      .el-menu-item {
+        height: 40px;
+        line-height: 40px;
+        font-size: 12px;
+        margin: 1px 8px;
+        padding-left: 56px !important;
+        color: #666;
+        
+        &:hover {
+          color: #0070f3;
+          background: rgba(0, 112, 243, 0.05);
+        }
+        
+        &.is-active {
+          color: #0070f3;
+          background: rgba(0, 112, 243, 0.08);
+          font-weight: 500;
+        }
+      }
     }
   }
   
@@ -972,10 +1212,28 @@ $sidebar-collapsed-width: 64px;
   white-space: nowrap;
   flex-shrink: 0;
   
+  .tag-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  
+  .tag-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    color: #909399;
+    transition: color 0.2s;
+  }
+  
   &:hover {
     color: #0070f3;
     background: rgba(0, 112, 243, 0.06);
     border-color: rgba(0, 112, 243, 0.2);
+    
+    .tag-icon {
+      color: #0070f3;
+    }
   }
   
   &.is-active {
@@ -983,6 +1241,10 @@ $sidebar-collapsed-width: 64px;
     background: linear-gradient(135deg, #0070f3, #0051cc);
     border-color: #0070f3;
     box-shadow: 0 2px 6px rgba(0, 112, 243, 0.3);
+    
+    .tag-icon {
+      color: rgba(255, 255, 255, 0.95);
+    }
     
     .tag-close {
       color: rgba(255, 255, 255, 0.8);
