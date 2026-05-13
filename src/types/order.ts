@@ -6,7 +6,8 @@
 import type { SubsidiaryId } from '@/constants/subsidiary'
 
 // ── 订单状态 ─────────────────────────────────
-export type OrderStatus = 'pending' | 'production' | 'completed' | 'shipped'
+// 待审核 | 生产中 | 已发货 | 已开票 | 已完成（回款完成）
+export type OrderStatus = 'pending' | 'production' | 'shipped' | 'invoiced' | 'completed'
 export type InvoiceStatus = 'none' | 'pending' | 'done'
 export type PaymentBucket = '' | 'low' | 'mid' | 'high'
 
@@ -83,19 +84,22 @@ export interface OrderFilter {
 }
 
 // ── 状态标签映射 ─────────────────────────────
+// 5 种状态：待审核 → 生产中 → 已发货 → 已开票 → 已完成（回款完成）
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending: '待审核',
   production: '生产中',
-  completed: '已完成',
-  shipped: '已发货'
+  shipped: '已发货',
+  invoiced: '已开票',
+  completed: '已完成'
 }
 
 /** Element Plus Tag 类型映射：按《结构说明》区分颜色 */
 export const ORDER_STATUS_TAG_TYPE: Record<OrderStatus, '' | 'warning' | 'info' | 'success' | 'danger'> = {
-  pending: 'warning',      // 橙色 → 待处理
-  production: 'info',      // 蓝色 → 进行中
-  completed: 'success',    // 绿色 → 已完成
-  shipped: ''              // 默认 → 已发货
+  pending: 'warning',      // 橙色 → 待审核
+  production: 'info',      // 蓝色 → 生产中
+  shipped: '',             // 默认 → 已发货
+  invoiced: 'success',    // 绿色 → 已开票
+  completed: ''            // 默认 → 已完成（回款完成）
 }
 
 export const INVOICE_STATUS_LABEL: Record<InvoiceStatus, string> = {
@@ -121,6 +125,7 @@ export function paymentColor(progress: number): string {
   return '#e6a23c'
 }
 
+/** 已开票及以后状态均可打印生产计划单 */
 export function canPrintProductionSheet(status: OrderStatus): boolean {
-  return status === 'production' || status === 'completed' || status === 'shipped'
+  return status === 'production' || status === 'shipped' || status === 'invoiced' || status === 'completed'
 }

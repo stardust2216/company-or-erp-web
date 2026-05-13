@@ -199,7 +199,7 @@
             <div class="tags-view-actions">
               <el-dropdown @command="handleTagsCommand" trigger="click">
                 <el-icon class="tags-action-icon">
-                  <ArrowDown />
+                  <More />
                 </el-icon>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -222,7 +222,7 @@
           </div>
         </div>
         
-        <!-- Page Content -->
+        <!-- Page Content 内容区域 -->
         <div class="page-content">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">
@@ -1282,11 +1282,16 @@ $sidebar-collapsed-width: 64px;
   align-items: center;
   
   .tags-action-icon {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    color: white;
+    background-color: #0070f3;
     padding: 6px;
     cursor: pointer;
-    color: #666;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 18px;
     transition: all 0.2s;
     
     &:hover {
