@@ -66,7 +66,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-01', orderNo: 'ORD-20240510-1021', subsidiaryId: 'yahui',
       customer: '亚辉塑业有限公司', amount: 0, status: 'pending', invoiceStatus: 'none',
-      paymentProgress: 0, contact: '张志远', phone: '13800138001', remark: 'PE 编织袋 5000 条',
+      paymentProgress: 0, stockRemain: 0, contact: '张志远', phone: '13800138001', remark: 'PE 编织袋 5000 条',
       deliveryAddress: '广西南宁市西乡塘区物流园 A3', expectedFinishDate: '2024-05-28',
       lines: mkLines('s01', [
         { productName: 'PE 编织袋', spec: '50kg 覆膜', qty: 5000, unit: '条', unitPrice: 12.8 },
@@ -76,7 +76,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-02', orderNo: 'ORD-20240511-2156', subsidiaryId: 'longzhou',
       customer: '龙州塑业有限公司', amount: 0, status: 'production', invoiceStatus: 'pending',
-      paymentProgress: 35, contact: '李敏', phone: '13900139002', remark: '糖袋定制色',
+      paymentProgress: 35, stockRemain: 5200, contact: '李敏', phone: '13900139002', remark: '糖袋定制色',
       deliveryAddress: '广西崇左市龙州县工业园', expectedFinishDate: '2024-05-25',
       lines: mkLines('s02', [{ productName: '白砂糖袋', spec: '50kg 黄条', qty: 8000, unit: '条', unitPrice: 10.7 }]),
       createdAt: '2024-05-11 11:02:08'
@@ -84,7 +84,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-03', orderNo: 'ORD-20240509-0882', subsidiaryId: 'huawei',
       customer: '华维食品添加剂', amount: 0, status: 'completed', invoiceStatus: 'done',
-      paymentProgress: 100, contact: '王工', phone: '13700137003', remark: '',
+      paymentProgress: 100, stockRemain: 0, contact: '王工', phone: '13700137003', remark: '',
       deliveryAddress: '广东省广州市黄埔区化工路 88 号', expectedFinishDate: '2024-05-15',
       lines: mkLines('s03', [{ productName: '添加剂内膜袋', spec: '25kg 食品级', qty: 6000, unit: '条', unitPrice: 7.05 }]),
       createdAt: '2024-05-09 14:40:00'
@@ -92,7 +92,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-04', orderNo: 'ORD-20240512-3301', subsidiaryId: 'yahui',
       customer: '南方包装集团', amount: 0, status: 'pending', invoiceStatus: 'none',
-      paymentProgress: 10, contact: '陈总', phone: '13600136004', remark: '加急，月底前交货',
+      paymentProgress: 10, stockRemain: 0, contact: '陈总', phone: '13600136004', remark: '加急，月底前交货',
       deliveryAddress: '深圳市宝安区松岗街道', expectedFinishDate: '2024-05-30',
       lines: mkLines('s04', [
         { productName: '集装袋', spec: '1 吨 吊带加强', qty: 400, unit: '条', unitPrice: 520 },
@@ -102,7 +102,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-05', orderNo: 'ORD-20240508-7740', subsidiaryId: 'longzhou',
       customer: '晨光农膜科技', amount: 0, status: 'shipped', invoiceStatus: 'done',
-      paymentProgress: 85, contact: '赵磊', phone: '13500135005', remark: '已发物流单号 SF1234567890',
+      paymentProgress: 85, stockRemain: 1200, contact: '赵磊', phone: '13500135005', remark: '已发物流单号 SF1234567890',
       deliveryAddress: '云南省昆明市官渡区', expectedFinishDate: '2024-05-18',
       lines: mkLines('s05', [{ productName: '农膜', spec: '12m 宽 0.08mm', qty: 12000, unit: '㎡', unitPrice: 5.1 }]),
       createdAt: '2024-05-08 16:22:33'
@@ -110,7 +110,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-06', orderNo: 'ORD-20240507-5512', subsidiaryId: 'guangwei',
       customer: '恒通化工有限公司', amount: 0, status: 'production', invoiceStatus: 'pending',
-      paymentProgress: 50, contact: '刘芳', phone: '13400134006', remark: '吨袋 B 型',
+      paymentProgress: 50, stockRemain: 450, contact: '刘芳', phone: '13400134006', remark: '吨袋 B 型',
       deliveryAddress: '山东省淄博市临淄区', expectedFinishDate: '2024-06-02',
       lines: mkLines('s06', [{ productName: '化工吨袋', spec: 'B 型 双吊环', qty: 900, unit: '条', unitPrice: 218 }]),
       createdAt: '2024-05-07 10:05:44'
@@ -118,7 +118,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-07', orderNo: 'ORD-20240506-9901', subsidiaryId: 'huawei',
       customer: '绿野农业科技', amount: 0, status: 'completed', invoiceStatus: 'done',
-      paymentProgress: 100, contact: '周洋', phone: '13300133007', remark: '',
+      paymentProgress: 100, stockRemain: 0, contact: '周洋', phone: '13300133007', remark: '',
       deliveryAddress: '湖南省长沙市望城区', expectedFinishDate: '2024-05-12',
       lines: mkLines('s07', [{ productName: '化肥袋', spec: '50kg 彩印', qty: 12000, unit: '条', unitPrice: 2.875 }]),
       createdAt: '2024-05-06 13:18:09'
@@ -126,7 +126,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-08', orderNo: 'ORD-20240505-4410', subsidiaryId: 'guangwei',
       customer: '海联进出口', amount: 0, status: 'shipped', invoiceStatus: 'done',
-      paymentProgress: 92, contact: '吴经理', phone: '13200132008', remark: '出口报关资料已寄',
+      paymentProgress: 92, stockRemain: 1600, contact: '吴经理', phone: '13200132008', remark: '出口报关资料已寄',
       deliveryAddress: '上海市浦东新区外高桥', expectedFinishDate: '2024-05-20',
       lines: mkLines('s08', [
         { productName: '硫磺袋', spec: '25kg 防潮', qty: 20000, unit: '条', unitPrice: 11.2 },
@@ -136,7 +136,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-09', orderNo: 'ORD-20240504-2288', subsidiaryId: 'yahui',
       customer: '鑫达塑料制品厂', amount: 0, status: 'pending', invoiceStatus: 'none',
-      paymentProgress: 0, contact: '郑华', phone: '13100131009', remark: '样品确认后再量产',
+      paymentProgress: 0, stockRemain: 0, contact: '郑华', phone: '13100131009', remark: '样品确认后再量产',
       deliveryAddress: '广西南宁市江南区', expectedFinishDate: '2024-06-10',
       lines: mkLines('s09', [{ productName: '样品袋', spec: '按图纸', qty: 500, unit: '条', unitPrice: 57.8 }]),
       createdAt: '2024-05-04 15:33:21'
@@ -144,7 +144,7 @@ function seedOrders(): Order[] {
     {
       id: 'ord-seed-10', orderNo: 'ORD-20240503-6677', subsidiaryId: 'longzhou',
       customer: '宏泰建材批发', amount: 0, status: 'production', invoiceStatus: 'none',
-      paymentProgress: 28, contact: '孙杰', phone: '13000130010', remark: '',
+      paymentProgress: 28, stockRemain: 14400, contact: '孙杰', phone: '13000130010', remark: '',
       deliveryAddress: '贵州省贵阳市南明区', expectedFinishDate: '2024-05-22',
       lines: mkLines('s10', [{ productName: '水泥袋', spec: '50kg 阀口', qty: 20000, unit: '条', unitPrice: 3.8 }]),
       createdAt: '2024-05-03 11:11:11'
@@ -169,6 +169,7 @@ function seedOrders(): Order[] {
       subsidiaryId: sub, customer: `演示客户 ${i} 有限公司`, amount: sumOrderLines(lines),
       status: statuses[i % 4], invoiceStatus: inv[i % 3],
       paymentProgress: Math.min(100, (i * 7) % 101),
+      stockRemain: Math.floor((lines[0]?.qty || 0) * (Math.random() * 0.5)),
       contact: `联系人${i}`, phone: `138${String(10000000 + i).slice(-8)}`,
       remark: i % 6 === 0 ? '附合同扫描件' : '',
       deliveryAddress: '广西南宁市（演示地址）',
@@ -196,6 +197,7 @@ export const useOrdersStore = defineStore('orders', () => {
       amount: sumOrderLines(lines), status: input.status,
       invoiceStatus: input.invoiceStatus,
       paymentProgress: Math.min(100, Math.max(0, input.paymentProgress)),
+      stockRemain: input.lines[0]?.qty || 0,
       contact: input.contact, phone: input.phone,
       remark: input.remark || '', deliveryAddress: input.deliveryAddress || '',
       expectedFinishDate: input.expectedFinishDate || '', lines,

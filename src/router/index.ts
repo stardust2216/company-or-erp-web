@@ -113,7 +113,7 @@ const router = createRouter({
 // Navigation Guards
 // ============================================
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to, _from) => {
   const title = to.meta.title as string | undefined
   document.title = title ? `${title} | Company ERP` : 'Company ERP'
 
@@ -121,14 +121,12 @@ router.beforeEach((to, _from, next) => {
 
   // 检查是否需要登录
   if (requiresAuth && !authUtil.isLogin()) {
-    next({ name: 'Login', query: { redirect: to.fullPath } })
-    return
+    return { name: 'Login', query: { redirect: to.fullPath } }
   }
 
   // 已登录但访问登录页，重定向到首页
   if (!requiresAuth && authUtil.isLogin() && to.name === 'Login') {
-    next({ name: 'Dashboard' })
-    return
+    return { name: 'Dashboard' }
   }
 
   // 检查角色权限
@@ -136,12 +134,12 @@ router.beforeEach((to, _from, next) => {
   if (requiredRole && authUtil.isLogin()) {
     const userInfo = authUtil.getUserInfo()
     if (userInfo && !permissionUtil.hasRole(userInfo.role as UserRole, requiredRole)) {
-      next({ name: 'Forbidden' })
-      return
+      return { name: 'Forbidden' }
     }
   }
 
-  next()
+  // 放行
+  return true
 })
 
 export default router

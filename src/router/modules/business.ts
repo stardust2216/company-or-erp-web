@@ -15,40 +15,34 @@ const businessRoutes: RouteRecordRaw[] = [
     children: [
 
       // ══════════════════════════════════════════
-      // 🏭 亚辉塑业（编织袋/集装袋）
-      // ══════════════════════════════════════════
-      {
-        path: 'yahui',
-        name: 'Yahui',
-        redirect: '/business/yahui/orders',
-        meta: { title: '亚辉塑业', icon: 'OfficeBuilding', requiresAuth: true, subsidiary: 'yahui' },
-        children: [
-          {
-            path: 'orders',
-            name: 'YahuiOrderList',
-            component: () => import('@/views/business/yahui/OrderList.vue'),
-            meta: { title: '订单列表', icon: 'Document', requiresAuth: true }
-          },
-          {
-            path: 'orders/:id',
-            name: 'YahuiOrderDetail',
-            component: () => import('@/views/business/yahui/OrderDetail.vue'),
-            meta: { title: '订单详情', requiresAuth: true, hidden: true }
-          },
-          {
-            path: 'production-plan',
-            name: 'YahuiProductionPlan',
-            component: () => import('@/views/business/yahui/ProductionPlan.vue'),
-            meta: { title: '生产计划单', icon: 'SetUp', requiresAuth: true }
-          },
-          {
-            path: 'order-stats',
-            name: 'YahuiOrderStats',
-            component: () => import('@/views/business/yahui/OrderStats.vue'),
-            meta: { title: '订单统计', icon: 'DataLine', requiresAuth: true }
-          }
-        ]
-      },
+// 🏭 亚辉塑业（编织袋/集装袋）
+// ══════════════════════════════════════════
+{
+  path: 'yahui',
+  name: 'Yahui',
+  redirect: '/business/yahui/orders',
+  meta: { title: '亚辉塑业', icon: 'OfficeBuilding', requiresAuth: true, subsidiary: 'yahui' },
+  children: [
+    {
+      path: 'orders',
+      name: 'YahuiOrderList',
+      component: () => import('@/views/business/yahui/OrderList.vue'),
+      meta: { title: '订单列表', icon: 'Document', requiresAuth: true }
+    },
+    {
+      path: 'production-plan',
+      name: 'YahuiProductionPlan',
+      component: () => import('@/views/business/yahui/ProductionPlan.vue'),
+      meta: { title: '生产计划单', icon: 'SetUp', requiresAuth: true }
+    },
+    {
+      path: 'order-stats',
+      name: 'YahuiOrderStats',
+      component: () => import('@/views/business/yahui/OrderStats.vue'),
+      meta: { title: '订单统计', icon: 'DataLine', requiresAuth: true }
+    }
+  ]
+},
 
       // ══════════════════════════════════════════
       // 🏭 龙州塑业（糖袋）

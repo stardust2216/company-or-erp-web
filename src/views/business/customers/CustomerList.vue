@@ -104,6 +104,7 @@ const formRef = ref<FormInstance>()
 const form = reactive<CustomerInput>({
   companyName: '',
   subsidiaryId: SUBSIDIARY_IDS[0],
+  businessType: 'production',
   contact: '',
   phone: '',
   businessScope: '',
@@ -123,6 +124,7 @@ function reset() {
   editingId.value = null
   form.companyName = ''
   form.subsidiaryId = SUBSIDIARY_IDS[0]
+  form.businessType = 'production'
   form.contact = ''
   form.phone = ''
   form.businessScope = ''
@@ -141,6 +143,7 @@ function openEdit(row: Customer) {
   editingId.value = row.id
   form.companyName = row.companyName
   form.subsidiaryId = row.subsidiaryId
+  form.businessType = row.businessType
   form.contact = row.contact
   form.phone = row.phone
   form.businessScope = row.businessScope

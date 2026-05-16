@@ -654,14 +654,24 @@ function closeContextMenu() {
 // ============================================
 
 watch(() => route.path, (newPath) => {
-  addVisitedView({
-    path: newPath,
-    name: route.name as string || '',
-    title: (route.meta.title as string) || getMenuTitle(newPath),
-    icon: (route.meta.icon as string) || getMenuIcon(newPath),
-    meta: route.meta
-  })
-  activeSidebarMenu.value = newPath
+  // hidden: true 的动态路由（如订单详情）不添加为标签，不影响侧边栏高亮
+  const isHidden = route.meta?.hidden === true
+
+  if (!isHidden) {
+    addVisitedView({
+      path: newPath,
+      name: route.name as string || '',
+      title: (route.meta.title as string) || getMenuTitle(newPath),
+      icon: (route.meta.icon as string) || getMenuIcon(newPath),
+      meta: route.meta
+    })
+    activeSidebarMenu.value = newPath
+  } else {
+    // 详情页：侧边栏高亮保持父级列表页（去掉最后一段路径）
+    const parentPath = newPath.replace(/\/[^/]+$/, '')
+    activeSidebarMenu.value = parentPath
+  }
+
   // 更新顶部菜单选中状态
   const topMenu = topMenus.value.find(m => newPath.startsWith(m.path))
   if (topMenu) {
@@ -717,17 +727,23 @@ watch(contextMenuVisible, (val) => {
 // ============================================
 
 onMounted(() => {
-  // Add current route to visited views
-  addVisitedView({
-    path: route.path,
-    name: route.name as string || '',
-    title: (route.meta.title as string) || getMenuTitle(route.path),
-    icon: (route.meta.icon as string) || getMenuIcon(route.path),
-    meta: route.meta
-  })
-  
-  // Set active sidebar menu
-  activeSidebarMenu.value = route.path
+  const isHidden = route.meta?.hidden === true
+
+  if (!isHidden) {
+    // Add current route to visited views
+    addVisitedView({
+      path: route.path,
+      name: route.name as string || '',
+      title: (route.meta.title as string) || getMenuTitle(route.path),
+      icon: (route.meta.icon as string) || getMenuIcon(route.path),
+      meta: route.meta
+    })
+    activeSidebarMenu.value = route.path
+  } else {
+    // 详情页：侧边栏高亮父级列表页
+    const parentPath = route.path.replace(/\/[^/]+$/, '')
+    activeSidebarMenu.value = parentPath
+  }
   
   // 设置顶部菜单
   const topMenu = topMenus.value.find(m => route.path.startsWith(m.path))
@@ -965,6 +981,7 @@ $sidebar-collapsed-width: 64px;
   display: flex;
   margin-top: $header-height;
   min-height: calc(100vh - $header-height);
+  overflow-x: hidden
 }
 
 // ============================================
@@ -1307,8 +1324,10 @@ $sidebar-collapsed-width: 64px;
 
 .page-content {
   padding: 16px;
+  width: 100%;
   min-height: calc(100vh - $header-height - $tags-view-height);
   background: #f0f2f5;
+  overflow-x: auto;
 }
 
 // ============================================

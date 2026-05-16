@@ -31,6 +31,7 @@ export interface Order {
   status: OrderStatus
   invoiceStatus: InvoiceStatus
   paymentProgress: number
+  stockRemain: number
   contact: string
   phone: string
   remark: string
@@ -128,4 +129,215 @@ export function paymentColor(progress: number): string {
 /** 已开票及以后状态均可打印生产计划单 */
 export function canPrintProductionSheet(status: OrderStatus): boolean {
   return status === 'production' || status === 'shipped' || status === 'invoiced' || status === 'completed'
+}
+
+// ============================================
+// 龙州塑业 - 糖袋订单扩展类型
+// 适用于：龙州塑业（糖袋业务）
+// ============================================
+
+/** 糖袋产品外袋规格 */
+export interface SugarBagOuterSpec {
+  /** 宽度*有效长度（cm） */
+  outerSize: string
+  /** 重量（g/套） */
+  outerWeight: number
+  /** 经向拉力（牛） */
+  warpTension: number
+  /** 纬向拉力（牛） */
+  weftTension: number
+  /** 经纬密度（经：纬） */
+  density: string
+}
+
+/** 糖袋使用布筒规格 */
+export interface SugarBagClothSpec {
+  /** 宽度*平方克重(cm*g/㎡) */
+  clothSize: string
+  /** 重量（g/套） */
+  clothWeight: number
+}
+
+/** 糖袋内袋规格 */
+export interface SugarBagInnerSpec {
+  /** 宽度*长度（cm） */
+  innerSize: string
+  /** 重量（g/套） */
+  innerWeight: number
+  /** 高/低压 */
+  pressure: '高压' | '低压'
+  /** 材质要求 */
+  material: string
+  /** 颜色 */
+  color: string
+}
+
+/** 整套克重、袋口、袋底、印刷 */
+export interface SugarBagOtherSpec {
+  /** 整套克重（g/套） */
+  totalWeight: number
+  /** 袋口-一般 */
+  bagMouthNormal: string
+  /** 袋口-翻口 */
+  bagMouthFlip: string
+  /** 袋口-圈口 */
+  bagMouthRing: string
+  /** 袋底-连膜车底 */
+  bagBottomConnected: string
+  /** 袋底-非连膜车底 */
+  bagBottomNonConnected: string
+  /** 袋底-单折 */
+  bagBottomSingleFold: string
+  /** 袋底-双折 */
+  bagBottomDoubleFold: string
+  /** 印刷-单面 */
+  printSingle: string
+  /** 印刷-双面 */
+  printDouble: string
+}
+
+/** 糖袋订单产品明细 */
+export interface SugarBagOrderLine {
+  id: string
+  /** 产品序号 */
+  productSeq: number
+  /** 品牌名称 */
+  brandName: string
+  /** 产品名称 */
+  productName: string
+  /** 外袋规格 */
+  outerSpec: SugarBagOuterSpec
+  /** 使用布筒 */
+  clothSpec: SugarBagClothSpec
+  /** 内袋规格 */
+  innerSpec: SugarBagInnerSpec
+  /** 其他规格（克重、袋口、袋底、印刷） */
+  otherSpec: SugarBagOtherSpec
+  /** 订单数量-件数（包） */
+  qtyPackages: number
+  /** 订单数量-数量（套） */
+  qtySets: number
+  /** 订单数量-重量（吨） */
+  qtyWeight: number
+  /** 单价（元/套） */
+  unitPrice: number
+  /** 金额（元） */
+  amount: number
+}
+
+/** 出货明细 */
+export interface SugarBagDelivery {
+  /** 使用单位出货序号 */
+  deliverySeq: number
+  /** 出货日期 */
+  deliveryDate: string
+  /** 出货数量-件数（件） */
+  deliveryPackages: number
+  /** 出货数量-数量（套） */
+  deliverySets: number
+  /** 出货数量-重量（吨） */
+  deliveryWeight: number
+}
+
+/** 承运信息 */
+export interface SugarBagCarrier {
+  /** 承运单位 */
+  carrierName: string
+  /** 承运车号 */
+  vehicleNumber: string
+  /** 司机姓名 */
+  driverName: string
+}
+
+/** 龙州塑业糖袋订单实体 */
+export interface SugarBagOrder {
+  id: string
+  orderNo: string
+  subsidiaryId: 'longzhou'
+  /** 集团名称 */
+  groupName: string
+  /** 使用单位（客户） */
+  customer: string
+  /** 合同签订日期 */
+  contractDate: string
+  /** 使用单位合同序号 */
+  customerContractSeq: number
+  /** 合同编号 */
+  contractNo: string
+  /** 产品明细列表 */
+  lines: SugarBagOrderLine[]
+  /** 出货明细列表 */
+  deliveries: SugarBagDelivery[]
+  /** 承运信息 */
+  carrier?: SugarBagCarrier
+  /** 订单总数量（套） */
+  totalQty: number
+  /** 订单总金额（元） */
+  totalAmount: number
+  /** 已出货数量（套） */
+  shippedQty: number
+  /** 剩余库存（套） */
+  stockRemain: number
+  /** 订单状态 */
+  status: OrderStatus
+  /** 开票状态 */
+  invoiceStatus: InvoiceStatus
+  /** 回款进度（%） */
+  paymentProgress: number
+  /** 备注 */
+  remark: string
+  createdAt: string
+}
+
+/** 龙州塑业糖袋订单创建输入 */
+export interface SugarBagOrderCreateInput {
+  groupName: string
+  customer: string
+  contractDate: string
+  customerContractSeq: number
+  contractNo: string
+  lines: Omit<SugarBagOrderLine, 'id'>[]
+  carrier?: Omit<SugarBagCarrier, never>
+  remark: string
+}
+
+/** 龙州塑业糖袋订单更新输入 */
+export type SugarBagOrderUpdateInput = Partial<
+  Pick<
+    SugarBagOrder,
+    | 'groupName'
+    | 'customer'
+    | 'contractDate'
+    | 'contractNo'
+    | 'lines'
+    | 'deliveries'
+    | 'carrier'
+    | 'status'
+    | 'invoiceStatus'
+    | 'paymentProgress'
+    | 'remark'
+  >
+>
+
+/** 糖袋订单筛选条件 */
+export interface SugarBagOrderFilter {
+  groupName: string
+  customer: string
+  contractNo: string
+  status: OrderStatus | ''
+  dateRange: [string, string] | null
+}
+
+/** 糖袋订单统计汇总 */
+export interface SugarBagOrderSummary {
+  totalOrders: number
+  totalQty: number
+  totalAmount: number
+  shippedQty: number
+  stockRemain: number
+  pendingCount: number
+  productionCount: number
+  shippedCount: number
+  invoicedCount: number
+  completedCount: number
 }

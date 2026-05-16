@@ -15,7 +15,7 @@ const reportRoutes: RouteRecordRaw[] = [
     children: [
 
       // ══════════════════════════════════════════
-      // 🏭 亚辉塑业报表（14项）
+      // 🏭 亚辉塑业报表
       // ══════════════════════════════════════════
       {
         path: 'yahui',
@@ -23,44 +23,63 @@ const reportRoutes: RouteRecordRaw[] = [
         redirect: '/reports/yahui/order-a',
         meta: { title: '亚辉塑业', icon: 'OfficeBuilding', requiresAuth: true, subsidiary: 'yahui' },
         children: [
-          // 订单报表
+          // 采购/销售/出库
           {
             path: 'order-a',
             name: 'YahuiOrderReportA',
             component: () => import('@/views/reports/yahui/OrderReportA.vue'),
-            meta: { title: '订单报表A', icon: 'Document', requiresAuth: true }
+            meta: { title: '采购合同报表', icon: 'Document', requiresAuth: true }
           },
           {
             path: 'order-b',
             name: 'YahuiOrderReportB',
             component: () => import('@/views/reports/yahui/OrderReportB.vue'),
-            meta: { title: '订单报表B', icon: 'Document', requiresAuth: true }
+            meta: { title: '销售合同报表', icon: 'Document', requiresAuth: true }
           },
           {
             path: 'order-c',
             name: 'YahuiOrderReportC',
             component: () => import('@/views/reports/yahui/OrderReportC.vue'),
-            meta: { title: '订单报表C', icon: 'Document', requiresAuth: true }
+            meta: { title: '出库明细报表', icon: 'Document', requiresAuth: true }
           },
-          // 生产报表（8工序日报）
+          {
+            path: 'stock-in',
+            name: 'YahuiStockInReport',
+            component: () => import('@/views/reports/yahui/StockInReport.vue'),
+            meta: { title: '入库明细报表', icon: 'Download', requiresAuth: true }
+          },
+          // 生产报表
           {
             path: 'production-daily',
             name: 'YahuiProductionDaily',
             component: () => import('@/views/reports/yahui/ProductionDaily.vue'),
-            meta: { title: '生产日报（8工序）', icon: 'SetUp', requiresAuth: true }
+            meta: { title: '生产日报（硫磺）', icon: 'SetUp', requiresAuth: true }
+          },
+          {
+            path: 'output-report',
+            name: 'YahuiOutputReport',
+            component: () => import('@/views/reports/yahui/YahuiOutputReport.vue'),
+            meta: { title: '产量产值报表', icon: 'DataAnalysis', requiresAuth: true }
           },
           // 库存报表
           {
             path: 'stock-fabric',
             name: 'YahuiStockFabric',
             component: () => import('@/views/reports/yahui/StockFabric.vue'),
-            meta: { title: '布筒库存', icon: 'Box', requiresAuth: true }
+            meta: { title: '硫磺库存日报', icon: 'Box', requiresAuth: true }
           },
           {
             path: 'stock-material',
             name: 'YahuiStockMaterial',
             component: () => import('@/views/reports/yahui/StockMaterial.vue'),
-            meta: { title: '原料库存', icon: 'Box', requiresAuth: true }
+            meta: { title: '原料耗用报表', icon: 'Box', requiresAuth: true }
+          },
+          // 工业生产经营
+          {
+            path: 'industry',
+            name: 'YahuiIndustryReport',
+            component: () => import('@/views/reports/yahui/IndustryReport.vue'),
+            meta: { title: '工业生产经营', icon: 'DataBoard', requiresAuth: true }
           },
           // 数据存储
           {
