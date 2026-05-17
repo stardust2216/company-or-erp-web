@@ -113,12 +113,82 @@
         <el-button type="primary" :icon="Printer" @click="handlePrint">打印</el-button>
       </template>
     </el-dialog>
+    <!-- 新增计划单弹窗 -->
+    <el-dialog v-model="addFormVisible" title="新增生产计划单" width="720px" :close-on-click-modal="false" draggable>
+      <el-form ref="addFormRef" :model="addForm" :rules="addFormRules" label-width="100px" size="default">
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="关联订单" prop="orderNo">
+              <el-select v-model="addForm.orderNo" placeholder="请选择关联订单" clearable filterable style="width:100%" @change="onOrderSelect">
+                <el-option v-for="opt in orderOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="计划日期" prop="planDate">
+              <el-date-picker v-model="addForm.planDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width:100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="客户名称" prop="customerName">
+              <el-input v-model="addForm.customerName" placeholder="客户名称（自动填充）" clearable />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="产品名称" prop="productName">
+              <el-input v-model="addForm.productName" placeholder="产品名称（自动填充）" clearable />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="规格">
+              <el-input v-model="addForm.spec" placeholder="规格（如：55*105）" clearable />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="计划数量" prop="quantity">
+              <el-input-number v-model="addForm.quantity" :min="0" :step="1000" placeholder="套" style="width:100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="生产车间" prop="workshop">
+              <el-select v-model="addForm.workshop" placeholder="请选择车间" style="width:100%">
+                <el-option label="拉丝车间" value="拉丝车间" />
+                <el-option label="圆织车间" value="圆织车间" />
+                <el-option label="吹膜车间" value="吹膜车间" />
+                <el-option label="一体机车间" value="一体机车间" />
+                <el-option label="普印车间" value="普印车间" />
+                <el-option label="涂膜车间" value="涂膜车间" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="生产工序">
+              <el-input v-model="addForm.process" placeholder="如：拉丝→圆织→普印→打包" clearable />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="备注">
+              <el-input v-model="addForm.remark" type="textarea" :rows="2" placeholder="备注信息" clearable />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="addFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitAddForm">确认新增</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { SetUp, Plus, Printer, View, Search, Refresh } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { useLongzhouOrdersStore } from '@/stores/longzhouOrders'
+
+const orderStore = useLongzhouOrdersStore()
 
 // ============================================================
 // 搜索表单
@@ -129,8 +199,70 @@ const pageSize = ref(10)
 
 const handleSearch = () => { currentPage.value = 1 }
 const handleReset = () => { searchForm.value = { planNo: '', orderNo: '', status: '' }; currentPage.value = 1 }
-const handleAdd = () => console.log('新增计划单')
-const handlePrint = (row?: any) => console.log('打印计划单', row)
+
+// ============================================================
+// 新增计划单弹窗
+// ============================================================
+const addFormVisible = ref(false)
+const addFormRef = ref<FormInstance>()
+const addForm = reactive({
+  orderNo: '', customerName: '', productName: '', spec: '',
+  quantity: 0, workshop: '', process: '', planDate: '', remark: ''
+})
+const addFormRules: FormRules = {
+  customerName: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
+  productName: [{ required: true, message: '请输入产品名称', trigger: 'blur' }],
+  workshop: [{ required: true, message: '请输入生产车间', trigger: 'blur' }],
+  planDate: [{ required: true, message: '请选择计划日期', trigger: 'change' }]
+}
+const orderOptions = computed(() => orderStore.list.map(o => ({
+  value: o.orderNo,
+  label: `${o.orderNo} - ${o.customer}`,
+  customer: o.customer,
+  product: o.lines?.[0]?.productName || '',
+  spec: o.lines?.[0]?.outerSpec?.outerSize || ''
+})))
+function onOrderSelect(val: string) {
+  const opt = orderOptions.value.find(o => o.value === val)
+  if (opt) { addForm.customerName = opt.customer; addForm.productName = opt.product; addForm.spec = opt.spec }
+}
+const handleAdd = () => {
+  Object.assign(addForm, { orderNo: '', customerName: '', productName: '', spec: '', quantity: 0, workshop: '', process: '', planDate: '', remark: '' })
+  addFormVisible.value = true
+}
+const submitAddForm = async () => {
+  await addFormRef.value?.validate()
+  const planNo = `LZ-PP-${new Date().getFullYear()}${String(localPlans.value.length + 1).padStart(3, '0')}`
+  localPlans.value.unshift({ id: Date.now(), planNo, orderNo: addForm.orderNo, customerName: addForm.customerName, productName: addForm.productName, spec: addForm.spec, quantity: addForm.quantity, workshop: addForm.workshop, process: addForm.process, status: 'pending', planDate: addForm.planDate, remark: addForm.remark })
+  ElMessage.success('生产计划单已新增')
+  addFormVisible.value = false
+}
+
+// ============================================================
+// 打印计划单
+// ============================================================
+const handlePrint = (row?: any) => {
+  const target = row || currentRow.value
+  if (!target) return
+  const pw = window.open('', '_blank', 'width=900,height=680')
+  if (!pw) { ElMessage.warning('请允许弹出窗口以打印'); return }
+  pw.document.write(`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><title>生产计划单 - ${target.planNo}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Microsoft YaHei',SimSun,sans-serif;font-size:13px;padding:24px}.company{text-align:center;font-size:22px;font-weight:bold;margin-bottom:4px}.title{text-align:center;font-size:17px;font-weight:bold;margin-bottom:16px;letter-spacing:2px}.info{border:1px solid #999;margin-bottom:12px}.info-row{display:flex;border-bottom:1px solid #ccc}.info-row:last-child{border-bottom:none}.info-cell{padding:7px 12px;flex:1;border-right:1px solid #ccc;display:flex;gap:6px}.info-cell:last-child{border-right:none}.label{color:#666;white-space:nowrap}.value{font-weight:600}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#e8f0fe;text-align:center;padding:7px 6px;border:1px solid #999}td{padding:6px;border:1px solid #ccc;text-align:center}.footer{margin-top:24px;display:flex;justify-content:space-between;font-size:12px}.signs{display:flex;gap:48px}.sign{display:flex;flex-direction:column;gap:6px;align-items:center}.sign-line{border-bottom:1px solid #000;width:100px;height:24px}@media print{body{padding:10px}}</style>
+</head><body>
+<div class="company">龙州塑业有限公司</div>
+<div class="title">生产计划单</div>
+<div class="info">
+<div class="info-row"><div class="info-cell"><span class="label">计划单号：</span><span class="value">${target.planNo}</span></div><div class="info-cell"><span class="label">关联订单：</span><span class="value">${target.orderNo}</span></div><div class="info-cell"><span class="label">计划日期：</span><span class="value">${target.planDate}</span></div></div>
+<div class="info-row"><div class="info-cell"><span class="label">客户名称：</span><span class="value">${target.customerName}</span></div><div class="info-cell"><span class="label">产品名称：</span><span class="value">${target.productName}</span></div><div class="info-cell"><span class="label">规格：</span><span class="value">${target.spec}</span></div></div>
+<div class="info-row"><div class="info-cell"><span class="label">计划数量：</span><span class="value">${(target.quantity||0).toLocaleString()} 套</span></div><div class="info-cell"><span class="label">生产车间：</span><span class="value">${target.workshop}</span></div><div class="info-cell"><span class="label">状态：</span><span class="value">${target.status==='completed'?'已完成':target.status==='producing'?'生产中':'待安排'}</span></div></div>
+<div class="info-row"><div class="info-cell" style="flex:3"><span class="label">生产工序：</span><span class="value">${target.process}</span></div><div class="info-cell"><span class="label">备注：</span><span class="value">${target.remark||'-'}</span></div></div>
+</div>
+<table><thead><tr><th width="40">序</th><th>工序名称</th><th width="120">负责人</th><th width="120">计划完成时间</th><th width="80">完成数量</th><th width="80">质检</th><th>备注</th></tr></thead>
+<tbody>${(target.process||'待安排').split('→').map((s: string, i: number) => `<tr><td>${i+1}</td><td>${s.trim()}</td><td></td><td></td><td></td><td></td><td></td></tr>`).join('')}</tbody></table>
+<div class="footer"><div class="signs"><div class="sign"><div class="sign-line"></div><span>制单人</span></div><div class="sign"><div class="sign-line"></div><span>生产主管</span></div><div class="sign"><div class="sign-line"></div><span>审核人</span></div></div><span>打印时间：${new Date().toLocaleString('zh-CN')}</span></div>
+<script>window.onload=function(){window.print()}<\/script></body></html>`)
+  pw.document.close()
+}
 
 // ============================================================
 // 详情弹窗
@@ -158,9 +290,9 @@ interface ProductionPlanRow {
 }
 
 // ============================================================
-// Mock 数据（15条，覆盖6-8工序）
+// 本地计划单数据（含初始 Mock 数据）
 // ============================================================
-const mockData: ProductionPlanRow[] = [
+const localPlans = ref<ProductionPlanRow[]>([
   { id: 1, planNo: 'LZ-PP-2026001', orderNo: '2026XXXX01', customerName: 'A集团', productName: '一级白砂糖袋', spec: '66*96', quantity: 50000, workshop: '拉丝车间', process: '拉丝→圆织→普印→打包', status: 'producing', planDate: '2026-05-01', remark: '第一批' },
   { id: 2, planNo: 'LZ-PP-2026002', orderNo: '2026XXXX01', customerName: 'A集团', productName: '二级白砂糖袋', spec: '66*96', quantity: 30000, workshop: '拉丝车间', process: '拉丝→圆织→普印→打包', status: 'producing', planDate: '2026-05-05', remark: '第一批' },
   { id: 3, planNo: 'LZ-PP-2026003', orderNo: 'LZ20260510-B', customerName: 'B糖业', productName: '50kg白砂糖编织袋', spec: '55*105', quantity: 80000, workshop: '吹膜车间', process: '吹膜→制袋→打包', status: 'pending', planDate: '2026-05-10', remark: '' },
@@ -176,13 +308,13 @@ const mockData: ProductionPlanRow[] = [
   { id: 13, planNo: 'LZ-PP-2026013', orderNo: 'LZ20260801-L', customerName: 'L糖业', productName: '50kg白砂糖编织袋（涂膜单面）', spec: '55*105', quantity: 55000, workshop: '涂膜车间', process: '涂膜→打包', status: 'pending', planDate: '2026-08-01', remark: '' },
   { id: 14, planNo: 'LZ-PP-2026014', orderNo: 'LZ20260810-M', customerName: 'M糖业', productName: '50kg红糖编织袋', spec: '55*105', quantity: 35000, workshop: '拉丝车间', process: '拉丝→圆织→普印→打包', status: 'pending', planDate: '2026-08-10', remark: '' },
   { id: 15, planNo: 'LZ-PP-2026015', orderNo: '2026XXXX02', customerName: 'A集团', productName: '一级白砂糖袋', spec: '66*96', quantity: 0, workshop: '拉丝车间', process: '拉丝→圆织→普印→打包', status: 'pending', planDate: '2026-08-15', remark: '待确认' }
-]
+])
 
 // ============================================================
 // 过滤逻辑
 // ============================================================
 const filteredData = computed(() => {
-  return mockData.filter((row) => {
+  return localPlans.value.filter((row) => {
     if (searchForm.value.planNo && !row.planNo.includes(searchForm.value.planNo)) return false
     if (searchForm.value.orderNo && !row.orderNo.includes(searchForm.value.orderNo)) return false
     if (searchForm.value.status && row.status !== searchForm.value.status) return false

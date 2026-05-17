@@ -225,9 +225,7 @@
         <!-- Page Content 内容区域 -->
         <div class="page-content">
           <router-view v-slot="{ Component }">
-            <transition name="fade" mode="out-in">
-              <component :is="Component" />
-            </transition>
+            <component :is="Component" />
           </router-view>
         </div>
       </main>
@@ -758,13 +756,14 @@ onMounted(() => {
 @use '@/scss/mixins' as *;
 
 // ============================================
-// Layout Variables
+// Layout Variables (synced with _variables.scss)
 // ============================================
 
 $header-height: 60px;
 $tags-view-height: 42px;
 $sidebar-width: 240px;
 $sidebar-collapsed-width: 64px;
+$page-padding: 16px;
 
 // ============================================
 // Tags View Container
@@ -1323,11 +1322,14 @@ $sidebar-collapsed-width: 64px;
 // ============================================
 
 .page-content {
-  padding: 16px;
+  padding: $page-padding;
   width: 100%;
+  max-width: 100%;
   min-height: calc(100vh - $header-height - $tags-view-height);
+  box-sizing: border-box;
   background: #f0f2f5;
-  overflow-x: auto;
+  /* 防止页面级横向滚动，子元素自行处理内部溢出 */
+  overflow-x: hidden;
 }
 
 // ============================================

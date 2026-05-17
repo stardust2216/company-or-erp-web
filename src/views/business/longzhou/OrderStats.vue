@@ -99,21 +99,25 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { DataLine, Document, Box, Money, User } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
+import { useLongzhouOrdersStore } from '@/stores/longzhouOrders'
 
+const orderStore = useLongzhouOrdersStore()
 const selectedYear = ref('2026')
 
 // ============================================================
-// Mock 统计数据
+// 统计数据 - 从 Pinia store 实时计算
 // ============================================================
 const statsData = computed(() => {
+  const s = orderStore.summary
   return {
-    totalOrders: 15,
-    totalQuantity: '640,500',
-    totalAmount: '128.5',
-    customerCount: 8
+    totalOrders: s.totalOrders,
+    totalQuantity: s.totalQty.toLocaleString('zh-CN'),
+    totalAmount: (s.totalAmount / 10000).toFixed(1),
+    customerCount: [...new Set(orderStore.list.map(o => o.customer))].filter(Boolean).length
   }
 })
 
+// 客户排名 - 从 store 聚合
 interface CustomerRank {
   customerName: string
   orderCount: number
@@ -122,13 +126,24 @@ interface CustomerRank {
   ratio: number
 }
 
-const customerRanking = ref<CustomerRank[]>([
-  { customerName: 'A集团', orderCount: 2, totalQuantity: 80000, totalAmount: 37.0, ratio: 28.5 },
-  { customerName: 'B糖业', orderCount: 1, totalQuantity: 80000, totalAmount: 30.7, ratio: 23.9 },
-  { customerName: 'E糖业', orderCount: 1, totalQuantity: 60000, totalAmount: 22.6, ratio: 17.6 },
-  { customerName: 'F糖业', orderCount: 1, totalQuantity: 100000, totalAmount: 35.6, ratio: 27.7 },
-  { customerName: 'G糖业', orderCount: 1, totalQuantity: 70000, totalAmount: 25.9, ratio: 20.2 }
-])
+const customerRanking = computed<CustomerRank[]>(() => {
+  const map = new Map<string, { count: number; qty: number; amount: number }>()
+  orderStore.list.forEach(o => {
+    const key = o.customer
+    const prev = map.get(key) || { count: 0, qty: 0, amount: 0 }
+    map.set(key, { count: prev.count + 1, qty: prev.qty + o.totalQty, amount: prev.amount + o.totalAmount })
+  })
+  const totalAmount = orderStore.summary.totalAmount || 1
+  return Array.from(map.entries())
+    .sort((a, b) => b[1].amount - a[1].amount)
+    .map(([name, v]) => ({
+      customerName: name,
+      orderCount: v.count,
+      totalQuantity: v.qty,
+      totalAmount: Math.round(v.amount / 10000 * 10) / 10,
+      ratio: Math.round(v.amount / totalAmount * 100)
+    }))
+})
 
 const statusChartRef = ref<HTMLElement>()
 const trendChartRef = ref<HTMLElement>()
@@ -143,9 +158,11 @@ onMounted(() => {
   })
 })
 
+// 状态分布饼图 - 从 store 实时读取
 const initStatusChart = () => {
   if (!statusChartRef.value) return
   const chart = echarts.init(statusChartRef.value)
+  const s = orderStore.summary
   chart.setOption({
     tooltip: { trigger: 'item' },
     legend: { bottom: 0 },
@@ -154,30 +171,42 @@ const initStatusChart = () => {
       radius: ['40%', '70%'],
       label: { formatter: '{b}: {c}个 ({d}%)' },
       data: [
-        { value: 10, name: '待审核', itemStyle: { color: '#909399' } },
-        { value: 2, name: '生产中', itemStyle: { color: '#e6a23c' } },
-        { value: 2, name: '已发货', itemStyle: { color: '#67c23a' } },
-        { value: 0, name: '已开票', itemStyle: { color: '#409eff' } },
-        { value: 0, name: '回款进度', itemStyle: { color: '#f56c6c' } }
+        { value: s.pendingCount, name: '待审核', itemStyle: { color: '#909399' } },
+        { value: s.productionCount, name: '生产中', itemStyle: { color: '#e6a23c' } },
+        { value: s.shippedCount, name: '已发货', itemStyle: { color: '#67c23a' } },
+        { value: s.invoicedCount, name: '已开票', itemStyle: { color: '#409eff' } },
+        { value: s.completedCount, name: '已完成', itemStyle: { color: '#f56c6c' } }
       ]
     }]
   })
 }
 
+// 月度趋势柱+折线图 - 从 store 聚合月度数据
 const initTrendChart = () => {
   if (!trendChartRef.value) return
   const chart = echarts.init(trendChartRef.value)
+  // 按月聚合
+  const monthMap = new Map<string, { qty: number; amount: number }>()
+  orderStore.list.forEach(o => {
+    const month = o.contractDate.substring(0, 7) // YYYY-MM
+    const prev = monthMap.get(month) || { qty: 0, amount: 0 }
+    monthMap.set(month, { qty: prev.qty + o.totalQty, amount: prev.amount + o.totalAmount })
+  })
+  const sorted = [...monthMap.entries()].sort()
+  const months = sorted.map(([m]) => m.replace('-', '年') + '月')
+  const qtyData = sorted.map(([, v]) => v.qty)
+  const amtData = sorted.map(([, v]) => Math.round(v.amount / 10000 * 10) / 10)
   chart.setOption({
     tooltip: { trigger: 'axis' },
     legend: { data: ['订单数量（套）', '合同金额（万元）'], bottom: 0 },
-    xAxis: { type: 'category', data: ['5月', '6月', '7月', '8月'] },
+    xAxis: { type: 'category', data: months.length ? months : ['暂无数据'] },
     yAxis: [
       { type: 'value', name: '订单数量（套）' },
       { type: 'value', name: '合同金额（万元）', position: 'right' }
     ],
     series: [
-      { name: '订单数量（套）', type: 'bar', data: [110000, 260000, 210000, 60500], itemStyle: { color: '#e8590c' } },
-      { name: '合同金额（万元）', type: 'line', yAxisIndex: 1, data: [20.3, 48.7, 39.6, 19.9], itemStyle: { color: '#409eff' } }
+      { name: '订单数量（套）', type: 'bar', data: qtyData.length ? qtyData : [0], itemStyle: { color: '#e8590c' } },
+      { name: '合同金额（万元）', type: 'line', yAxisIndex: 1, data: amtData.length ? amtData : [0], itemStyle: { color: '#409eff' } }
     ]
   })
 }

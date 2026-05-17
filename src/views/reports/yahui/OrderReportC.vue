@@ -101,11 +101,11 @@
           stripe
           size="small"
           highlight-current-row
-          style="width: auto; min-width: 100%"
+          style="width: 100%"
           header-row-class-name="multi-header-row"
         >
           <!-- ====== 客户名称 ====== -->
-          <el-table-column label="客户名称" align="center" min-width="220">
+          <el-table-column label="客户名称" align="center">
             <el-table-column prop="groupName" label="集团名称" width="120" show-overflow-tooltip />
             <el-table-column prop="unitName" label="使用单位名称" width="120" show-overflow-tooltip />
           </el-table-column>
@@ -114,19 +114,19 @@
           <el-table-column prop="orderDate" label="订单日期" width="110" align="center" />
 
           <!-- ====== 订单合同 ====== -->
-          <el-table-column label="订单合同" align="center" min-width="175">
+          <el-table-column label="订单合同" align="center">
             <el-table-column prop="orderSeq" label="使用单位订单序号" width="95" align="center" />
             <el-table-column prop="contractNo" label="合同编号" width="140" show-overflow-tooltip />
           </el-table-column>
 
           <!-- ====== 产品 ====== -->
-          <el-table-column label="产品" align="center" min-width="200">
+          <el-table-column label="产品" align="center">
             <el-table-column prop="seq" label="序号" width="55" align="center" />
             <el-table-column prop="productName" label="产品名称" width="170" show-overflow-tooltip />
           </el-table-column>
 
           <!-- ====== 产品规格 → 外袋 ====== -->
-          <el-table-column label="产品规格" align="center" min-width="620">
+          <el-table-column label="产品规格" align="center">
             <el-table-column label="外袋" align="center">
               <el-table-column prop="outerBagSize" label="宽度*长度（cm）" width="115" />
               <el-table-column prop="outerBagWeight" label="重量（g/套）" width="95" align="right" />
@@ -238,20 +238,20 @@
           <el-table-column prop="invoiceFlag" label="是否开具发票（是/否）" width="145" align="center" />
 
           <!-- ====== 合同要求交货期限和地点 ====== -->
-          <el-table-column label="合同要求交货期限和地点" align="center" min-width="220">
+          <el-table-column label="合同要求交货期限和地点" align="center">
             <el-table-column prop="deliveryDate" label="日期" width="110" align="center" />
             <el-table-column prop="deliveryRemark" label="备注" width="120" show-overflow-tooltip />
             <el-table-column prop="deliveryLocation" label="交货地点" width="100" />
           </el-table-column>
 
           <!-- ====== 生产计划 ====== -->
-          <el-table-column label="生产计划" align="center" min-width="200">
+          <el-table-column label="生产计划" align="center">
             <el-table-column prop="tubeFinishTime" label="布卷完成时间" width="120" align="center" />
             <el-table-column prop="productFinishTime" label="产品（一体机）完成时间" width="155" align="center" />
           </el-table-column>
 
           <!-- ====== 发货明细 → 发货情况 ====== -->
-          <el-table-column label="发货明细" align="center" min-width="520">
+          <el-table-column label="发货明细" align="center">
             <el-table-column label="发货情况" align="center">
               <el-table-column prop="shipBatch" label="发货批次" width="80" align="center" />
               <el-table-column prop="shipDate" label="日期" width="110" align="center" />
@@ -264,7 +264,7 @@
           </el-table-column>
 
           <!-- ====== 累计发货（套） ====== -->
-          <el-table-column label="累计发货（套）" align="center" min-width="150">
+          <el-table-column label="累计发货（套）" align="center">
             <el-table-column prop="totalShipPieces" label="件数（件）" width="85" align="right" />
             <el-table-column prop="totalShipSets" label="总数量（套）" width="100" align="right" />
           </el-table-column>
@@ -935,9 +935,16 @@ const summaryData = computed(() => {
 /* ====== 水平滚动容器 ====== */
 .table-scroll-wrapper {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   display: block;
+
+  :deep(.el-table) {
+    width: max-content !important;
+    min-width: 100% !important;
+  }
+
   &::-webkit-scrollbar {
     height: 10px;
   }

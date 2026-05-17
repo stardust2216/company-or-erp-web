@@ -30,6 +30,12 @@ const businessRoutes: RouteRecordRaw[] = [
       meta: { title: '订单列表', icon: 'Document', requiresAuth: true }
     },
     {
+      path: 'orders/:id',
+      name: 'YahuiOrderDetail',
+      component: () => import('@/views/business/yahui/OrderDetail.vue'),
+      meta: { title: '订单详情', requiresAuth: true, hidden: true }
+    },
+    {
       path: 'production-plan',
       name: 'YahuiProductionPlan',
       component: () => import('@/views/business/yahui/ProductionPlan.vue'),

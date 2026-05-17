@@ -96,20 +96,32 @@
       <el-table :data="paginatedData" border stripe style="width: 100%" max-height="800"
         :header-cell-style="headerCellStyle" size="small" highlight-current-row>
         <el-table-column type="index" label="序号" width="55" align="center" fixed="left" />
-        <el-table-column prop="customerName" label="客户名称" min-width="130" show-overflow-tooltip fixed="left" />
+        <el-table-column prop="customer" label="使用单位" min-width="130" show-overflow-tooltip fixed="left" />
         <el-table-column prop="groupName" label="集团名称" min-width="130" show-overflow-tooltip />
         <el-table-column prop="contractNo" label="合同编号" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="productName" label="产品名称" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="orderQuantity" label="订单数量（套）" width="130" align="right" />
-        <el-table-column prop="unitPrice" label="单价（元/套）" width="120" align="right" />
-        <el-table-column prop="contractAmount" label="合同金额（元）" width="130" align="right" />
+        <el-table-column label="产品名称" min-width="140" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.lines?.[0]?.productName || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="totalQty" label="订单数量（套）" width="130" align="right">
+          <template #default="{ row }">{{ (row.totalQty || 0).toLocaleString('zh-CN') }}</template>
+        </el-table-column>
+        <el-table-column prop="totalAmount" label="合同金额（元）" width="140" align="right">
+          <template #default="{ row }">{{ (row.totalAmount || 0).toLocaleString('zh-CN') }}</template>
+        </el-table-column>
         <el-table-column label="订单状态" width="110" align="center">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="remainingStock" label="剩余库存（套）" width="130" align="right" />
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column prop="stockRemain" label="剩余库存（套）" width="130" align="right">
+          <template #default="{ row }">{{ (row.stockRemain || 0).toLocaleString('zh-CN') }}</template>
+        </el-table-column>
+        <el-table-column label="回款进度" width="120" align="center">
+          <template #default="{ row }">
+            <el-progress :percentage="row.paymentProgress || 0" :stroke-width="8" />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link :icon="View" size="small" @click.stop="openDetail(row)">查看</el-button>
             <el-button type="warning" link :icon="Edit" size="small" @click.stop="handleEdit(row)">编辑</el-button>
@@ -126,50 +138,222 @@
     </el-card>
 
     <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="订单详情" width="900px" :close-on-click-modal="false" draggable>
+    <el-dialog v-model="detailVisible" title="订单详情" width="960px" :close-on-click-modal="false" draggable>
       <template v-if="currentRow">
-        <el-descriptions :column="3" border size="small" label-width="120px">
-          <el-descriptions-item label="客户名称">{{ currentRow.customerName }}</el-descriptions-item>
+        <el-descriptions :column="3" border size="small" label-width="110px">
           <el-descriptions-item label="集团名称">{{ currentRow.groupName }}</el-descriptions-item>
-          <el-descriptions-item label="使用单位">{{ currentRow.useUnit }}</el-descriptions-item>
+          <el-descriptions-item label="使用单位">{{ currentRow.customer }}</el-descriptions-item>
+          <el-descriptions-item label="合同序号">第{{ currentRow.customerContractSeq }}份</el-descriptions-item>
           <el-descriptions-item label="合同编号" :span="2">{{ currentRow.contractNo }}</el-descriptions-item>
-          <el-descriptions-item label="签订日期">{{ currentRow.signDate }}</el-descriptions-item>
-        </el-descriptions>
-
-        <el-divider content-position="left">产品信息</el-divider>
-
-        <el-descriptions :column="3" border size="small" label-width="120px">
-          <el-descriptions-item label="产品名称">{{ currentRow.productName }}</el-descriptions-item>
-          <el-descriptions-item label="订单数量">{{ currentRow.orderQuantity }} 套</el-descriptions-item>
-          <el-descriptions-item label="单价">{{ currentRow.unitPrice }} 元/套</el-descriptions-item>
-          <el-descriptions-item label="合同金额">{{ currentRow.contractAmount }} 元</el-descriptions-item>
+          <el-descriptions-item label="签订日期">{{ currentRow.contractDate }}</el-descriptions-item>
+          <el-descriptions-item label="订单总量">{{ (currentRow.totalQty || 0).toLocaleString() }} 套</el-descriptions-item>
+          <el-descriptions-item label="合同总金额">{{ (currentRow.totalAmount || 0).toLocaleString() }} 元</el-descriptions-item>
+          <el-descriptions-item label="剩余库存">{{ (currentRow.stockRemain || 0).toLocaleString() }} 套</el-descriptions-item>
           <el-descriptions-item label="订单状态">
-            <el-tag :type="statusTagType(currentRow.status)">{{ statusLabel(currentRow.status) }}</el-tag>
+            <el-tag :type="statusTagType(currentRow.status)" size="small">{{ statusLabel(currentRow.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="剩余库存">{{ currentRow.remainingStock }} 套</el-descriptions-item>
+          <el-descriptions-item label="开票状态">{{ currentRow.invoiceStatus === 'done' ? '已开票' : currentRow.invoiceStatus === 'pending' ? '开票中' : '未开票' }}</el-descriptions-item>
+          <el-descriptions-item label="回款进度">{{ currentRow.paymentProgress }}%</el-descriptions-item>
         </el-descriptions>
 
-        <el-divider content-position="left">产品规格</el-divider>
+        <el-divider content-position="left">产品明细</el-divider>
 
-        <el-descriptions :column="3" border size="small" label-width="120px">
-          <el-descriptions-item label="外袋规格">{{ currentRow.outerBagSpec }}</el-descriptions-item>
-          <el-descriptions-item label="布筒规格">{{ currentRow.clothSpec }}</el-descriptions-item>
-          <el-descriptions-item label="内袋规格">{{ currentRow.innerBagSpec }}</el-descriptions-item>
-          <el-descriptions-item label="袋口">{{ formatBool(currentRow.mouthGeneral, '一般') }} {{ formatBool(currentRow.mouthFlip, '翻口') }} {{ formatBool(currentRow.mouthRing, '圈口') }}</el-descriptions-item>
-          <el-descriptions-item label="袋底">{{ formatBool(currentRow.bottomConnected, '连膜车底') }} {{ formatBool(currentRow.bottomNonConnected, '非连膜车底') }}</el-descriptions-item>
-          <el-descriptions-item label="印刷">{{ formatBool(currentRow.printSingle, '单面') }} {{ formatBool(currentRow.printDouble, '双面') }}</el-descriptions-item>
-        </el-descriptions>
+        <el-table :data="currentRow.lines || []" border size="small" style="width:100%">
+          <el-table-column type="index" label="序" width="45" align="center" />
+          <el-table-column prop="productName" label="产品名称" min-width="130" />
+          <el-table-column prop="brandName" label="品牌" width="90" />
+          <el-table-column label="外袋规格" width="100">
+            <template #default="{ row: l }">{{ l.outerSpec?.outerSize || '' }}</template>
+          </el-table-column>
+          <el-table-column label="布筒规格" width="100">
+            <template #default="{ row: l }">{{ l.clothSpec?.clothSize || '' }}</template>
+          </el-table-column>
+          <el-table-column label="内袋规格" width="100">
+            <template #default="{ row: l }">{{ l.innerSpec?.innerSize || '' }}</template>
+          </el-table-column>
+          <el-table-column label="袋口" width="100">
+            <template #default="{ row: l }">
+              {{ [l.otherSpec?.bagMouthNormal==='是'?'一般':'', l.otherSpec?.bagMouthFlip==='是'?'翻口':'', l.otherSpec?.bagMouthRing==='是'?'圈口':''].filter(Boolean).join('/') }}
+            </template>
+          </el-table-column>
+          <el-table-column label="印刷" width="90">
+            <template #default="{ row: l }">
+              {{ [l.otherSpec?.printSingle==='是'?'单面':'', l.otherSpec?.printDouble==='是'?'双面':''].filter(Boolean).join('/') }}
+            </template>
+          </el-table-column>
+          <el-table-column label="数量(套)" width="100" align="right">
+            <template #default="{ row: l }">{{ (l.qtySets || 0).toLocaleString() }}</template>
+          </el-table-column>
+          <el-table-column label="单价(元/套)" width="100" align="right">
+            <template #default="{ row: l }">{{ (l.unitPrice || 0).toFixed(2) }}</template>
+          </el-table-column>
+          <el-table-column label="金额(元)" width="110" align="right">
+            <template #default="{ row: l }">{{ (l.amount || 0).toLocaleString() }}</template>
+          </el-table-column>
+        </el-table>
+
+        <template v-if="currentRow.deliveries?.length">
+          <el-divider content-position="left">出货明细</el-divider>
+          <el-table :data="currentRow.deliveries" border size="small" style="width:100%">
+            <el-table-column prop="deliverySeq" label="序号" width="60" align="center" />
+            <el-table-column prop="deliveryDate" label="出货日期" width="120" />
+            <el-table-column prop="deliveryPackages" label="件数" width="100" align="right" />
+            <el-table-column label="数量(套)" width="120" align="right">
+              <template #default="{ row: d }">{{ (d.deliverySets || 0).toLocaleString() }}</template>
+            </el-table-column>
+            <el-table-column label="重量(吨)" width="100" align="right">
+              <template #default="{ row: d }">{{ (d.deliveryWeight || 0).toFixed(2) }}</template>
+            </el-table-column>
+          </el-table>
+        </template>
       </template>
       <template #footer>
         <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button type="success" :icon="Printer" @click="currentRow && handlePrint(currentRow)">打印计划单</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog v-model="formVisible" :title="isEdit ? '编辑订单' : '新增订单'" width="800px" :close-on-click-modal="false" draggable>
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px" size="default">
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="集团名称" prop="groupName">
+              <el-input v-model="form.groupName" placeholder="请输入集团名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="使用单位" prop="customerName">
+              <el-input v-model="form.customerName" placeholder="请输入使用单位" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="合同编号" prop="contractNo">
+              <el-input v-model="form.contractNo" placeholder="请输入合同编号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="签订日期" prop="contractDate">
+              <el-date-picker v-model="form.contractDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width:100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="订单状态">
+              <el-select v-model="form.status" style="width:100%">
+                <el-option label="待审核" value="pending" />
+                <el-option label="生产中" value="production" />
+                <el-option label="已发货" value="shipped" />
+                <el-option label="已开票" value="invoiced" />
+                <el-option label="已完成" value="completed" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="开票状态">
+              <el-select v-model="form.invoiceStatus" style="width:100%">
+                <el-option label="未开票" value="none" />
+                <el-option label="开票中" value="pending" />
+                <el-option label="已开票" value="done" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="回款进度">
+              <el-slider v-model="form.paymentProgress" :format-tooltip="(v: number) => v + '%'" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="备注">
+              <el-input v-model="form.remark" placeholder="备注" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider content-position="left">产品明细</el-divider>
+
+        <div v-for="(line, idx) in form.lines" :key="idx" class="line-block">
+          <div class="line-header">
+            <span class="line-title">产品 {{ idx + 1 }}</span>
+            <el-button v-if="form.lines.length > 1" type="danger" link :icon="Delete" @click="removeLine(idx)" />
+          </div>
+          <el-row :gutter="12">
+            <el-col :span="8">
+              <el-form-item label="产品名称" label-width="80px">
+                <el-input v-model="line.productName" placeholder="产品名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="品牌" label-width="60px">
+                <el-input v-model="line.brandName" placeholder="品牌" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="外袋规格" label-width="80px">
+                <el-input v-model="line.outerBagSpec" placeholder="如：55*105" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="布筒规格" label-width="80px">
+                <el-input v-model="line.clothBagSpec" placeholder="如：55*85" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="内袋规格" label-width="80px">
+                <el-input v-model="line.innerBagSpec" placeholder="如：52*103" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="袋口" label-width="60px">
+                <el-checkbox v-model="line.mouthGeneral">一般</el-checkbox>
+                <el-checkbox v-model="line.mouthFlip">翻口</el-checkbox>
+                <el-checkbox v-model="line.mouthRing">圈口</el-checkbox>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="袋底" label-width="60px">
+                <el-checkbox v-model="line.bottomConnected">连膜</el-checkbox>
+                <el-checkbox v-model="line.bottomNonConnected">非连膜</el-checkbox>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="印刷" label-width="60px">
+                <el-checkbox v-model="line.printSingle">单面</el-checkbox>
+                <el-checkbox v-model="line.printDouble">双面</el-checkbox>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="数量(套)" label-width="80px">
+                <el-input-number v-model="line.qtySets" :min="0" :step="1000" style="width:100%" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="单价(元/套)" label-width="90px">
+                <el-input-number v-model="line.unitPrice" :min="0" :precision="2" style="width:100%" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+
+        <el-button type="primary" plain :icon="Plus" @click="addLine" style="margin-bottom:12px">添加产品</el-button>
+      </el-form>
+      <template #footer>
+        <el-button @click="formVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitForm">{{ isEdit ? '保存修改' : '提交新增' }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Document, Search, Refresh, View, Edit, Printer, Clock, SetUp, Van, Box, Plus } from '@element-plus/icons-vue'
+import { ref, computed, reactive } from 'vue'
+import { Document, Search, Refresh, View, Edit, Printer, Clock, SetUp, Van, Box, Plus, Delete } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { useLongzhouOrdersStore } from '@/stores/longzhouOrders'
+import type { SugarBagOrder, SugarBagOrderCreateInput } from '@/stores/longzhouOrders'
+import { ORDER_STATUS_LABEL, ORDER_STATUS_TAG_TYPE } from '@/types/order'
+
+const store = useLongzhouOrdersStore()
 
 // ============================================================
 // 搜索表单
@@ -180,101 +364,304 @@ const pageSize = ref(10)
 
 const handleSearch = () => { currentPage.value = 1 }
 const handleReset = () => { searchForm.value = { customerName: '', status: '', contractNo: '' }; currentPage.value = 1 }
-const handleAdd = () => { console.log('新增订单') }
 
 // ============================================================
 // 详情弹窗
 // ============================================================
 const detailVisible = ref(false)
-const currentRow = ref<any>(null)
-const openDetail = (row: any) => { currentRow.value = row; detailVisible.value = true }
-const handleEdit = (row: any) => { console.log('编辑订单', row) }
-const handlePrint = (row: any) => { console.log('打印生产计划单', row) }
+const currentRow = ref<SugarBagOrder | null>(null)
+const openDetail = (row: SugarBagOrder) => { currentRow.value = row; detailVisible.value = true }
 const formatBool = (val: string, label: string) => val === '是' ? label : ''
 
 // ============================================================
 // 订单状态
 // ============================================================
-type OrderStatus = 'pending' | 'producing' | 'shipped' | 'invoiced' | 'paid'
+type OrderStatus = 'pending' | 'production' | 'shipped' | 'invoiced' | 'completed'
 
-const statusLabel = (status: OrderStatus): string => {
-  const map: Record<OrderStatus, string> = {
-    pending: '待审核',
-    producing: '生产中',
-    shipped: '已发货',
-    invoiced: '已开票',
-    paid: '回款进度'
+const statusLabel = (status: string): string => {
+  return (ORDER_STATUS_LABEL as any)[status] || status
+}
+
+const statusTagType = (status: string): string => {
+  return (ORDER_STATUS_TAG_TYPE as any)[status] || ''
+}
+
+// ============================================================
+// 新增/编辑弹窗
+// ============================================================
+const formVisible = ref(false)
+const isEdit = ref(false)
+const editId = ref('')
+const formRef = ref<FormInstance>()
+
+function emptyLine() {
+  return {
+    productName: '', brandName: '', outerBagSpec: '', clothBagSpec: '', innerBagSpec: '',
+    mouthGeneral: false, mouthFlip: false, mouthRing: false,
+    bottomConnected: false, bottomNonConnected: false,
+    printSingle: false, printDouble: false,
+    qtyPackages: 0, qtySets: 0, unitPrice: 0
   }
-  return map[status] || status
 }
 
-const statusTagType = (status: OrderStatus): string => {
-  const map: Record<OrderStatus, string> = {
-    pending: 'info',
-    producing: 'warning',
-    shipped: 'success',
-    invoiced: '',
-    paid: 'danger'
+const form = reactive({
+  groupName: '',
+  customerName: '',
+  contractDate: '',
+  contractNo: '',
+  customerContractSeq: 1,
+  status: 'pending' as OrderStatus,
+  invoiceStatus: 'none' as 'none' | 'pending' | 'done',
+  paymentProgress: 0,
+  remark: '',
+  lines: [emptyLine()]
+})
+
+const formRules: FormRules = {
+  groupName: [{ required: true, message: '请输入集团名称', trigger: 'blur' }],
+  customerName: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
+  contractDate: [{ required: true, message: '请选择签订日期', trigger: 'change' }],
+  contractNo: [{ required: true, message: '请输入合同编号', trigger: 'blur' }]
+}
+
+const addLine = () => form.lines.push(emptyLine())
+const removeLine = (idx: number) => {
+  if (form.lines.length > 1) form.lines.splice(idx, 1)
+}
+
+function resetForm() {
+  form.groupName = ''
+  form.customerName = ''
+  form.contractDate = ''
+  form.contractNo = ''
+  form.customerContractSeq = 1
+  form.status = 'pending'
+  form.invoiceStatus = 'none'
+  form.paymentProgress = 0
+  form.remark = ''
+  form.lines = [emptyLine()]
+}
+
+const handleAdd = () => {
+  isEdit.value = false
+  editId.value = ''
+  resetForm()
+  formVisible.value = true
+}
+
+const handleEdit = (row: SugarBagOrder) => {
+  isEdit.value = true
+  editId.value = row.id
+  form.groupName = row.groupName
+  form.customerName = row.customer
+  form.contractDate = row.contractDate
+  form.contractNo = row.contractNo
+  form.customerContractSeq = row.customerContractSeq
+  form.status = row.status as OrderStatus
+  form.invoiceStatus = row.invoiceStatus
+  form.paymentProgress = row.paymentProgress
+  form.remark = row.remark
+  if (row.lines.length > 0) {
+    form.lines = row.lines.map(l => ({
+      productName: l.productName,
+      brandName: l.brandName,
+      outerBagSpec: l.outerSpec?.outerSize || '',
+      clothBagSpec: l.clothSpec?.clothSize || '',
+      innerBagSpec: l.innerSpec?.innerSize || '',
+      mouthGeneral: l.otherSpec?.bagMouthNormal === '是',
+      mouthFlip: l.otherSpec?.bagMouthFlip === '是',
+      mouthRing: l.otherSpec?.bagMouthRing === '是',
+      bottomConnected: l.otherSpec?.bagBottomConnected === '是',
+      bottomNonConnected: l.otherSpec?.bagBottomNonConnected === '是',
+      printSingle: l.otherSpec?.printSingle === '是',
+      printDouble: l.otherSpec?.printDouble === '是',
+      qtyPackages: l.qtyPackages,
+      qtySets: l.qtySets,
+      unitPrice: l.unitPrice
+    }))
   }
-  return map[status] || ''
+  formVisible.value = true
+}
+
+const submitForm = async () => {
+  await formRef.value?.validate()
+  if (isEdit.value && editId.value) {
+    store.updateOrder(editId.value, {
+      groupName: form.groupName,
+      customer: form.customerName,
+      status: form.status,
+      invoiceStatus: form.invoiceStatus,
+      paymentProgress: form.paymentProgress,
+      remark: form.remark
+    })
+    ElMessage.success('订单已更新')
+  } else {
+    const input: SugarBagOrderCreateInput = {
+      groupName: form.groupName,
+      customer: form.customerName,
+      contractDate: form.contractDate,
+      customerContractSeq: form.customerContractSeq,
+      contractNo: form.contractNo,
+      lines: form.lines.map((l, i) => ({
+        productSeq: i + 1,
+        brandName: l.brandName,
+        productName: l.productName,
+        outerSpec: { outerSize: l.outerBagSpec, outerWeight: 0, warpTension: 0, weftTension: 0, density: '' },
+        clothSpec: { clothSize: l.clothBagSpec, clothWeight: 0 },
+        innerSpec: { innerSize: l.innerBagSpec, innerWeight: 0, pressure: '低压' as '低压', material: '', color: '' },
+        otherSpec: {
+          totalWeight: 0,
+          bagMouthNormal: l.mouthGeneral ? '是' : '',
+          bagMouthFlip: l.mouthFlip ? '是' : '',
+          bagMouthRing: l.mouthRing ? '是' : '',
+          bagBottomConnected: l.bottomConnected ? '是' : '',
+          bagBottomNonConnected: l.bottomNonConnected ? '是' : '',
+          bagBottomSingleFold: '',
+          bagBottomDoubleFold: '',
+          printSingle: l.printSingle ? '是' : '',
+          printDouble: l.printDouble ? '是' : ''
+        },
+        qtyPackages: l.qtyPackages,
+        qtySets: l.qtySets,
+        qtyWeight: Math.round(l.qtySets * 0.135 * 100) / 100,
+        unitPrice: l.unitPrice,
+        amount: Math.round(l.qtySets * l.unitPrice * 100) / 100
+      })),
+      carrier: { carrierName: '', vehicleNumber: '', driverName: '' },
+      remark: form.remark
+    }
+    store.addOrder(input)
+    ElMessage.success('订单已新增')
+  }
+  formVisible.value = false
 }
 
 // ============================================================
-// 数据模型
+// 打印生产计划单
 // ============================================================
-interface OrderRow {
-  id: number
-  customerName: string
-  groupName: string
-  useUnit: string
-  signDate: string
-  unitOrderNo: string
-  contractNo: string
-  productName: string
-  outerBagSpec: string
-  clothSpec: string
-  innerBagSpec: string
-  mouthGeneral: string
-  mouthFlip: string
-  mouthRing: string
-  bottomConnected: string
-  bottomNonConnected: string
-  printSingle: string
-  printDouble: string
-  orderQuantity: number
-  unitPrice: number
-  contractAmount: number
-  status: OrderStatus
-  remainingStock: number
+const handlePrint = (row: SugarBagOrder) => {
+  const printWindow = window.open('', '_blank', 'width=900,height=700')
+  if (!printWindow) { ElMessage.warning('请允许弹出窗口'); return }
+
+  const lines = row.lines || []
+  const linesHtml = lines.map((l, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${l.productName || ''}</td>
+      <td>${l.brandName || ''}</td>
+      <td>${l.outerSpec?.outerSize || ''}</td>
+      <td>${l.clothSpec?.clothSize || ''}</td>
+      <td>${l.innerSpec?.innerSize || ''}</td>
+      <td>${[
+        l.otherSpec?.bagMouthNormal === '是' ? '一般' : '',
+        l.otherSpec?.bagMouthFlip === '是' ? '翻口' : '',
+        l.otherSpec?.bagMouthRing === '是' ? '圈口' : ''
+      ].filter(Boolean).join('/')}</td>
+      <td>${[
+        l.otherSpec?.bagBottomConnected === '是' ? '连膜' : '',
+        l.otherSpec?.bagBottomNonConnected === '是' ? '非连膜' : ''
+      ].filter(Boolean).join('/')}</td>
+      <td>${[
+        l.otherSpec?.printSingle === '是' ? '单面' : '',
+        l.otherSpec?.printDouble === '是' ? '双面' : ''
+      ].filter(Boolean).join('/')}</td>
+      <td>${(l.qtyPackages || 0).toLocaleString()}</td>
+      <td>${(l.qtySets || 0).toLocaleString()}</td>
+      <td>${(l.unitPrice || 0).toFixed(2)}</td>
+      <td>${(l.amount || 0).toLocaleString()}</td>
+    </tr>
+  `).join('')
+
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<title>生产计划单 - ${row.orderNo}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Microsoft YaHei', SimSun, sans-serif; font-size: 13px; color: #000; padding: 20px; }
+  .title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 6px; }
+  .subtitle { text-align: center; font-size: 13px; color: #666; margin-bottom: 16px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px 16px; margin-bottom: 12px; border: 1px solid #999; padding: 10px; }
+  .info-item { display: flex; gap: 6px; }
+  .info-label { color: #666; white-space: nowrap; min-width: 80px; }
+  .info-value { font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+  th { background: #e8f0fe; text-align: center; padding: 6px 4px; border: 1px solid #999; font-weight: 600; }
+  td { padding: 5px 4px; border: 1px solid #ccc; text-align: center; }
+  .footer { margin-top: 20px; display: flex; justify-content: space-between; font-size: 12px; }
+  .sign-area { display: flex; gap: 40px; }
+  .sign-item { display: flex; gap: 8px; align-items: flex-end; }
+  .sign-line { border-bottom: 1px solid #000; width: 100px; height: 20px; }
+  @media print {
+    body { padding: 10px; }
+    button { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="title">龙州塑业有限公司 生产计划单</div>
+  <div class="subtitle">26-27榨季糖袋生产计划</div>
+  <div class="info-grid">
+    <div class="info-item"><span class="info-label">订单编号：</span><span class="info-value">${row.orderNo}</span></div>
+    <div class="info-item"><span class="info-label">合同编号：</span><span class="info-value">${row.contractNo}</span></div>
+    <div class="info-item"><span class="info-label">签订日期：</span><span class="info-value">${row.contractDate}</span></div>
+    <div class="info-item"><span class="info-label">集团名称：</span><span class="info-value">${row.groupName}</span></div>
+    <div class="info-item"><span class="info-label">使用单位：</span><span class="info-value">${row.customer}</span></div>
+    <div class="info-item"><span class="info-label">合同序号：</span><span class="info-value">第${row.customerContractSeq}份</span></div>
+    <div class="info-item"><span class="info-label">总数量：</span><span class="info-value">${(row.totalQty || 0).toLocaleString()} 套</span></div>
+    <div class="info-item"><span class="info-label">总金额：</span><span class="info-value">${(row.totalAmount || 0).toLocaleString()} 元</span></div>
+    <div class="info-item"><span class="info-label">备注：</span><span class="info-value">${row.remark || ''}</span></div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th width="35">序号</th>
+        <th>产品名称</th>
+        <th>品牌</th>
+        <th>外袋规格</th>
+        <th>布筒规格</th>
+        <th>内袋规格</th>
+        <th>袋口</th>
+        <th>袋底</th>
+        <th>印刷</th>
+        <th>数量(包)</th>
+        <th>数量(套)</th>
+        <th>单价(元/套)</th>
+        <th>金额(元)</th>
+      </tr>
+    </thead>
+    <tbody>${linesHtml || '<tr><td colspan="13">暂无产品明细</td></tr>'}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="9" style="text-align:right;font-weight:bold;">合计</td>
+        <td style="font-weight:bold;">${(row.lines || []).reduce((s, l) => s + (l.qtyPackages || 0), 0).toLocaleString()}</td>
+        <td style="font-weight:bold;">${(row.totalQty || 0).toLocaleString()}</td>
+        <td></td>
+        <td style="font-weight:bold;">${(row.totalAmount || 0).toLocaleString()}</td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="footer">
+    <div class="sign-area">
+      <div class="sign-item"><span>制单人：</span><div class="sign-line"></div></div>
+      <div class="sign-item"><span>生产主管：</span><div class="sign-line"></div></div>
+      <div class="sign-item"><span>审核人：</span><div class="sign-line"></div></div>
+    </div>
+    <span>打印日期：${new Date().toLocaleDateString('zh-CN')}</span>
+  </div>
+  <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`)
+  printWindow.document.close()
 }
 
 // ============================================================
-// Mock 数据（15条，糖袋订单）
-// ============================================================
-const mockData: OrderRow[] = [
-  { id: 1, customerName: 'A集团', groupName: 'A集团', useUnit: 'A糖业有限公司', signDate: '2026-04-30', unitOrderNo: '1', contractNo: '2026XXXX01', productName: '一级白砂糖袋', outerBagSpec: '66*96', clothSpec: '69*108', innerBagSpec: '无', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 50000, unitPrice: 1.85, contractAmount: 92500, status: 'producing', remainingStock: 35000 },
-  { id: 2, customerName: 'A集团', groupName: 'A集团', useUnit: 'A糖业有限公司', signDate: '2026-04-30', unitOrderNo: '2', contractNo: '2026XXXX01', productName: '二级白砂糖袋', outerBagSpec: '66*96', clothSpec: '', innerBagSpec: '', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 30000, unitPrice: 1.85, contractAmount: 55500, status: 'producing', remainingStock: 21000 },
-  { id: 3, customerName: 'B糖业', groupName: 'B糖业集团', useUnit: 'B糖厂', signDate: '2026-05-10', unitOrderNo: 'B-001', contractNo: 'LZ20260510-B', productName: '50kg白砂糖编织袋', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 80000, unitPrice: 1.92, contractAmount: 153600, status: 'shipped', remainingStock: 56000 },
-  { id: 4, customerName: 'C糖业', groupName: 'C糖业集团', useUnit: 'C糖厂', signDate: '2026-05-15', unitOrderNo: 'C-001', contractNo: 'LZ20260515-C', productName: '50kg红糖编织袋', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 40000, unitPrice: 1.95, contractAmount: 78000, status: 'pending', remainingStock: 40000 },
-  { id: 5, customerName: 'D糖业', groupName: 'D糖业集团', useUnit: 'D糖厂', signDate: '2026-05-20', unitOrderNo: 'D-001', contractNo: 'LZ20260520-D', productName: '25kg白砂糖小袋', outerBagSpec: '45*85', clothSpec: '45*80', innerBagSpec: '42*83', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 50000, unitPrice: 1.55, contractAmount: 77500, status: 'pending', remainingStock: 50000 },
-  { id: 6, customerName: 'E糖业', groupName: 'E糖业集团', useUnit: 'E糖厂', signDate: '2026-06-01', unitOrderNo: 'E-001', contractNo: 'LZ20260601-E', productName: '50kg赤砂糖编织袋', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 60000, unitPrice: 1.88, contractAmount: 112800, status: 'producing', remainingStock: 42000 },
-  { id: 7, customerName: 'F糖业', groupName: 'F糖业集团', useUnit: 'F糖厂', signDate: '2026-06-10', unitOrderNo: 'F-001', contractNo: 'LZ20260610-F', productName: '50kg白砂糖编织袋（阀口）', outerBagSpec: '55*105', clothSpec: '', innerBagSpec: '无', mouthGeneral: '否', mouthFlip: '否', mouthRing: '是', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 100000, unitPrice: 1.78, contractAmount: 178000, status: 'pending', remainingStock: 100000 },
-  { id: 8, customerName: 'G糖业', groupName: 'G糖业集团', useUnit: 'G糖厂', signDate: '2026-06-15', unitOrderNo: 'G-001', contractNo: 'LZ20260615-G', productName: '50kg白砂糖编织袋', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 70000, unitPrice: 1.85, contractAmount: 129500, status: 'shipped', remainingStock: 49000 },
-  { id: 9, customerName: 'H糖业', groupName: 'H糖业集团', useUnit: 'H糖厂', signDate: '2026-06-20', unitOrderNo: 'H-001', contractNo: 'LZ20260620-H', productName: '50kg白砂糖编织袋（彩印）', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '否', printDouble: '否', orderQuantity: 120000, unitPrice: 2.15, contractAmount: 258000, status: 'pending', remainingStock: 120000 },
-  { id: 10, customerName: 'I糖业', groupName: 'I糖业集团', useUnit: 'I糖厂', signDate: '2026-07-01', unitOrderNo: 'I-001', contractNo: 'LZ20260701-I', productName: '1000kg集装袋（糖用）', outerBagSpec: '105*105*120', clothSpec: '105*170', innerBagSpec: '无', mouthGeneral: '否', mouthFlip: '否', mouthRing: '否', bottomConnected: '是', bottomNonConnected: '否', printSingle: '否', printDouble: '是', orderQuantity: 5000, unitPrice: 18.5, contractAmount: 92500, status: 'pending', remainingStock: 5000 },
-  { id: 11, customerName: 'A集团', groupName: 'A集团', useUnit: 'A糖业有限公司', signDate: '2026-07-10', unitOrderNo: '1', contractNo: '2026XXXX02', productName: '一级白砂糖袋', outerBagSpec: '66*96', clothSpec: '69*108', innerBagSpec: '无', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 0, unitPrice: 1.85, contractAmount: 0, status: 'pending', remainingStock: 0 },
-  { id: 12, customerName: 'J糖业', groupName: 'J糖业集团', useUnit: 'J糖厂', signDate: '2026-07-15', unitOrderNo: 'J-001', contractNo: 'LZ20260715-J', productName: '50kg白砂糖编织袋', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 45000, unitPrice: 1.95, contractAmount: 87750, status: 'pending', remainingStock: 45000 },
-  { id: 13, customerName: 'K糖业', groupName: 'K糖业集团', useUnit: 'K糖厂', signDate: '2026-07-20', unitOrderNo: 'K-001', contractNo: 'LZ20260720-K', productName: '50kg白砂糖编织袋', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 90000, unitPrice: 1.82, contractAmount: 163800, status: 'pending', remainingStock: 90000 },
-  { id: 14, customerName: 'L糖业', groupName: 'L糖业集团', useUnit: 'L糖厂', signDate: '2026-08-01', unitOrderNo: 'L-001', contractNo: 'LZ20260801-L', productName: '50kg白砂糖编织袋（涂膜单面）', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 55000, unitPrice: 1.9, contractAmount: 104500, status: 'pending', remainingStock: 55000 },
-  { id: 15, customerName: 'M糖业', groupName: 'M糖业集团', useUnit: 'M糖厂', signDate: '2026-08-10', unitOrderNo: 'M-001', contractNo: 'LZ20260810-M', productName: '50kg红糖编织袋', outerBagSpec: '55*105', clothSpec: '55*85', innerBagSpec: '52*103', mouthGeneral: '是', mouthFlip: '否', mouthRing: '否', bottomConnected: '否', bottomNonConnected: '是', printSingle: '是', printDouble: '否', orderQuantity: 35000, unitPrice: 1.95, contractAmount: 68250, status: 'pending', remainingStock: 35000 }
-]
-
-// ============================================================
-// 过滤逻辑
+// 过滤逻辑 - 接入 Pinia store
 // ============================================================
 const filteredData = computed(() => {
-  return mockData.filter((row) => {
-    if (searchForm.value.customerName && !row.customerName.includes(searchForm.value.customerName)) return false
+  return store.list.filter((row) => {
+    if (searchForm.value.customerName && !row.customer.includes(searchForm.value.customerName) && !row.groupName.includes(searchForm.value.customerName)) return false
     if (searchForm.value.status && row.status !== searchForm.value.status) return false
     if (searchForm.value.contractNo && !row.contractNo.includes(searchForm.value.contractNo)) return false
     return true
@@ -296,15 +683,15 @@ const statusCounts = computed(() => {
   const data = filteredData.value
   return {
     pending: data.filter(r => r.status === 'pending').length,
-    producing: data.filter(r => r.status === 'producing').length,
+    producing: data.filter(r => r.status === 'production').length,
     shipped: data.filter(r => r.status === 'shipped').length,
     invoiced: data.filter(r => r.status === 'invoiced').length,
-    paid: data.filter(r => r.status === 'paid').length
+    paid: data.filter(r => r.status === 'completed').length
   }
 })
 
 const totalStock = computed(() => {
-  return filteredData.value.reduce((s, r) => s + r.remainingStock, 0).toLocaleString('zh-CN')
+  return filteredData.value.reduce((s, r) => s + (r.stockRemain || 0), 0).toLocaleString('zh-CN')
 })
 
 // ============================================================
@@ -460,6 +847,28 @@ const headerCellStyle = () => ({
       justify-content: flex-end;
       border-top: 1px solid $color-gray-200;
       background: $color-gray-50;
+    }
+  }
+}
+
+// 产品明细块
+.line-block {
+  border: 1px solid $color-gray-200;
+  border-radius: $border-radius-base;
+  padding: $spacing-3 $spacing-4;
+  margin-bottom: $spacing-3;
+  background: $color-gray-50;
+
+  .line-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-3;
+
+    .line-title {
+      font-weight: $font-weight-semibold;
+      color: $color-primary;
+      font-size: $font-size-sm;
     }
   }
 }

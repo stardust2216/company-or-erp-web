@@ -25,7 +25,7 @@ body {
   font-size: $font-size-base;
   line-height: $line-height-normal;
   color: $color-gray-900;
-  background-color: $color-gray-100;
+  background-color: $bg-body;
 }
 
 // Links
@@ -84,7 +84,9 @@ html {
   @include custom-scrollbar;
 }
 
+// ============================================
 // Utility Classes
+// ============================================
 .text-truncate {
   @include text-truncate;
 }
@@ -97,29 +99,129 @@ html {
   @include flex-between;
 }
 
-// Element Plus Overrides - Industrial Theme
+// ============================================
+// Unified Page Layout (applied via .page-wrapper)
+// ---------------------------------------------------
+// All page-level components should use .page-wrapper
+// as root class for consistent width/padding/overflow
+// ============================================
+.page-wrapper {
+  padding: $page-content-padding;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  background: $bg-page;
+}
+
+// ============================================
+// Unified Page Card Layout
+// ---------------------------------------------------
+// For pages that use a card-style layout (filter + table)
+// ============================================
+.page-card {
+  background: $bg-card;
+  border: 1px solid $border-color-card;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+// ============================================
+// Unified Page Header (Hero)
+// ---------------------------------------------------
+// Consistent header card for all pages
+// ============================================
+.page-hero {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  margin-bottom: $spacing-4;
+  background: $bg-card;
+  padding: $spacing-5 $spacing-6;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-sm;
+  border: 1px solid $border-color-card;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  .hero-left {
+    display: flex;
+    align-items: center;
+    gap: $spacing-4;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: $border-radius-xl;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $text-white;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  }
+
+  .hero-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0 0 4px;
+    font-family: $font-family-heading;
+  }
+
+  .hero-subtitle {
+    font-size: $font-size-xs + 0.01rem; // ~13px
+    color: $text-muted;
+    margin: 0;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    flex-shrink: 0;
+  }
+}
+
+// ============================================
+// Element Plus Overrides — Industrial Theme
+// ============================================
 .el-button {
-  border-radius: 4px;
-  font-weight: 500;
+  border-radius: $border-radius-sm;
+  font-weight: $font-weight-medium;
 }
 
 .el-input__wrapper {
-  border-radius: 4px;
+  border-radius: $border-radius-sm;
 }
 
 .el-card {
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  border-radius: $border-radius-lg;
+  border: 1px solid $border-color-card;
+  box-shadow: $shadow-sm;
 }
 
 .el-table {
-  border-radius: 6px;
-  overflow: hidden;
+  border-radius: $border-radius-lg;
+  /* 不设 overflow，由 element-plus 内部自行管理 */
   
   th.el-table__cell {
-    background-color: #f8fafc;
-    font-weight: 600;
+    background-color: $bg-table-head;
+    font-weight: $font-weight-semibold;
     color: $color-gray-700;
   }
 }
@@ -129,7 +231,7 @@ html {
 }
 
 .el-dialog {
-  border-radius: 8px;
+  border-radius: $border-radius-xl;
 }
 
 .el-tag {

@@ -1,9 +1,31 @@
 <!doctype html>
-<html lang="en">
+<!--
+  根节点 lang 设为 zh-CN：
+    1) 让浏览器为中文字符选择更合适的字形与断行规则
+    2) 配合 <link> 中加载的中文字体（Noto Sans SC）保证跨平台一致显示，避免"件"等字符出现"���"乱码
+-->
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Fonts 预连接：提前建立连接，缩短首屏字体下载耗时 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!--
+      字体加载：
+        - Inter：英文 / 数字主字体（界面专用变量字体，字形紧凑现代）
+        - Noto Sans SC：兜底中文字体，确保任何系统都能正常渲染中文字符
+        - JetBrains Mono：等宽字体，用于数字 / 单号等需对齐的场景
+      使用 display=swap 避免字体未下载完成时出现"不可见文本"（FOIT）
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
     <title>company-or-erp-web</title>
   </head>
   <body>

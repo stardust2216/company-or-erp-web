@@ -1,11 +1,11 @@
 <template>
   <div class="placeholder-page">
     <div class="page-header">
-      <div class="header-badge" :style="{ background: 'linear-gradient(135deg,#4facfe,#00f2fe)' }">
+      <div class="header-badge" :style="{ background: 'linear-gradient(135deg,#667eea,#764ba2)' }">
         <el-icon :size="28"><component :is="iconComp" /></el-icon>
       </div>
       <div class="header-info">
-        <h1 class="page-title">广为科技 - 订单详情</h1>
+        <h1 class="page-title">亚辉塑业 - 订单详情</h1>
         <p class="page-subtitle">查看订单详细信息</p>
       </div>
     </div>

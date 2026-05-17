@@ -1,3 +1,7 @@
+/* 兜底 Web 中文字体：保证 Linux / 服务端 / 未装 CJK 字体的环境也能正常渲染汉字，
+   避免 "收货人" 等出现 "收???人" 方块乱码。 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -11,12 +15,31 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* ============= 字体回退链 =============
+     必须显式包含中文字体回退，否则在 Linux / Windows 旧系统等
+     未安装苹方/雅黑时，"件""桶"等部分汉字会显示为"���"乱码方块。
+     顺序：英文系统字 → macOS 中文 → Windows 中文 → Linux 中文 → Web 字体兜底 → 通用 sans-serif
+  */
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
+          'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+          'Source Han Sans SC', 'Noto Sans CJK SC', 'Noto Sans SC',
+          'WenQuanYi Micro Hei', sans-serif;
+  --heading: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
+             'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+             'Source Han Sans SC', 'Noto Sans CJK SC', 'Noto Sans SC',
+             'WenQuanYi Micro Hei', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, 'Courier New',
+          'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', monospace;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
+
+  /* 同步 Element Plus 的字体变量，避免其内部组件（如 el-table 表头、el-tag）
+     使用未含中文回退的字体导致乱码。 */
+  --el-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
+                    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+                    'Source Han Sans SC', 'Noto Sans CJK SC', 'Noto Sans SC',
+                    'WenQuanYi Micro Hei', sans-serif;
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);

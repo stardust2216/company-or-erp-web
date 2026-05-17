@@ -341,3 +341,153 @@ export interface SugarBagOrderSummary {
   invoicedCount: number
   completedCount: number
 }
+
+// ============================================
+// 亚辉塑业 - 编织袋/集装袋订单扩展类型
+// 适用于：亚辉塑业（编织袋、集装袋业务）
+// ============================================
+
+/** 编织袋/集装袋产品规格 */
+export interface WovenBagSpec {
+  /** 产品类型：编织袋 | 集装袋 | 方底阀口袋 | 其他 */
+  bagType: '编织袋' | '集装袋' | '方底阀口' | '其他'
+  /** 幅宽（cm） */
+  width: number
+  /** 长度（cm） */
+  length: number
+  /** 克重（g/m²） */
+  gramWeight: number
+  /** 材质 */
+  material: string
+  /** 颜色 */
+  color: string
+  /** 覆膜：无 | 单面覆膜 | 双面覆膜 */
+  lamination: '无' | '单面覆膜' | '双面覆膜'
+  /** 印刷颜色数 */
+  printColors: number
+  /** 印刷内容 */
+  printContent: string
+  /** 经向拉力（牛） */
+  warpTension: number
+  /** 纬向拉力（牛） */
+  weftTension: number
+  /** 底部样式：缝底 | 热切 | 粘合 */
+  bottomStyle: '缝底' | '热切' | '粘合'
+  /** 袋口样式：普通 | 阀口 | 折边 */
+  mouthStyle: '普通' | '阀口' | '折边'
+}
+
+/** 编织袋订单产品明细 */
+export interface WovenBagOrderLine {
+  id: string
+  /** 产品序号 */
+  productSeq: number
+  /** 品牌名称 */
+  brandName: string
+  /** 产品名称 */
+  productName: string
+  /** 规格 */
+  spec: WovenBagSpec
+  /** 数量（条） */
+  qty: number
+  /** 单位 */
+  unit: string
+  /** 单价（元/条） */
+  unitPrice: number
+  /** 金额（元） */
+  amount: number
+}
+
+/** 编织袋订单实体 */
+export interface WovenBagOrder {
+  id: string
+  orderNo: string
+  subsidiaryId: 'yahui'
+  /** 客户名称 */
+  customer: string
+  /** 联系人 */
+  contact: string
+  /** 联系电话 */
+  phone: string
+  /** 交货地址 */
+  deliveryAddress: string
+  /** 合同编号 */
+  contractNo: string
+  /** 签订日期 */
+  contractDate: string
+  /** 产品明细 */
+  lines: WovenBagOrderLine[]
+  /** 订单总数量 */
+  totalQty: number
+  /** 订单总金额 */
+  totalAmount: number
+  /** 已发货数量 */
+  shippedQty: number
+  /** 剩余库存 */
+  stockRemain: number
+  /** 期望交期 */
+  expectedFinishDate: string
+  /** 订单状态 */
+  status: OrderStatus
+  /** 开票状态 */
+  invoiceStatus: InvoiceStatus
+  /** 回款进度 */
+  paymentProgress: number
+  /** 备注 */
+  remark: string
+  createdAt: string
+}
+
+/** 编织袋订单创建输入 */
+export interface WovenBagOrderCreateInput {
+  customer: string
+  contact: string
+  phone: string
+  deliveryAddress: string
+  contractNo: string
+  contractDate: string
+  expectedFinishDate: string
+  lines: Omit<WovenBagOrderLine, 'id'>[]
+  remark: string
+}
+
+/** 编织袋订单更新输入 */
+export type WovenBagOrderUpdateInput = Partial<
+  Pick<
+    WovenBagOrder,
+    | 'customer'
+    | 'contact'
+    | 'phone'
+    | 'deliveryAddress'
+    | 'contractNo'
+    | 'contractDate'
+    | 'expectedFinishDate'
+    | 'lines'
+    | 'status'
+    | 'invoiceStatus'
+    | 'paymentProgress'
+    | 'remark'
+  >
+>
+
+/** 编织袋订单筛选条件 */
+export interface WovenBagOrderFilter {
+  customer: string
+  contractNo: string
+  status: OrderStatus | ''
+  dateRange: [string, string] | null
+}
+
+/** 编织袋订单统计汇总 */
+export interface WovenBagOrderSummary {
+  totalOrders: number
+  totalQty: number
+  totalAmount: number
+  shippedQty: number
+  stockRemain: number
+  pendingCount: number
+  productionCount: number
+  shippedCount: number
+  invoicedCount: number
+  completedCount: number
+}

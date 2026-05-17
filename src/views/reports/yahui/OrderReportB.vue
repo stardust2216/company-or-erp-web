@@ -102,7 +102,7 @@
           :data="paginatedData"
           border
           stripe
-          style="width:100%;min-width:3600px"
+          style="width:100%"
           :max-height="isFullscreen ? 'calc(100vh - 140px)' : '800'"
           size="small"
           highlight-current-row
@@ -124,7 +124,7 @@
           <el-table-column prop="enterpriseName" label="使用企业名称" width="130" show-overflow-tooltip />
 
           <!-- 产品名称（父级） -->
-          <el-table-column label="产品名称" min-width="1400">
+          <el-table-column label="产品名称">
             <el-table-column prop="contractNo" label="合同编号" width="170" show-overflow-tooltip />
             <el-table-column prop="seq" label="序号" width="60" align="center" />
             <el-table-column prop="name" label="名称" width="70" show-overflow-tooltip />
@@ -652,11 +652,19 @@ const summaryData = computed(() => {
 }
 
 .table-wrapper {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
 
   &.fullscreen-scroll {
     overflow-x: auto;
     overflow-y: auto;
+  }
+
+  :deep(.el-table) {
+    width: max-content !important;
+    min-width: 100% !important;
   }
 }
 

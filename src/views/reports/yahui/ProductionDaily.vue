@@ -769,9 +769,13 @@ const daliaoPageData = computed(() => paginate(daliaoFiltered.value, pageStates.
     }
 
     .table-wrapper {
+      width: 100%;
+      max-width: 100%;
       overflow-x: auto;
 
       :deep(.el-table) {
+        width: max-content !important;
+        min-width: 100% !important;
         font-size: $font-size-sm;
 
         .el-table__header-wrapper th {

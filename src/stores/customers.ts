@@ -33,14 +33,25 @@ export const useCustomersStore = defineStore('customers', () => {
   function getById(id: string) { return list.value.find((c) => c.id === id) }
 
   function addCustomer(data: CustomerInput) {
-    const c: Customer = { ...data, id: `cust-${Date.now()}`, createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ') }
+    const businessType = data.businessType ?? getBusinessType(data.subsidiaryId)
+    const c: Customer = {
+      ...data,
+      businessType,
+      id: `cust-${Date.now()}`,
+      createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    }
     list.value.unshift(c)
     return c
   }
 
   function updateCustomer(id: string, patch: Partial<CustomerInput>) {
     const c = list.value.find((x) => x.id === id)
-    if (c) Object.assign(c, patch)
+    if (!c) return
+    Object.assign(c, patch)
+    // 若改了子公司但未显式指定业务类型，则自动同步业务类型
+    if (patch.subsidiaryId && patch.businessType === undefined) {
+      c.businessType = getBusinessType(patch.subsidiaryId)
+    }
   }
 
   function removeCustomer(id: string) {

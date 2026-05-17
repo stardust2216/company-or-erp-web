@@ -98,22 +98,23 @@
         </div>
       </template>
 
-      <el-table
-        :data="paginatedData"
-        border
-        stripe
-        style="width:100%"
-        :max-height="isFullscreen ? 'calc(100vh - 140px)' : '800'"
-        size="small"
-        highlight-current-row
-        default-expand-all
-        show-header
-      >
+      <div class="table-scroll-wrapper">
+        <el-table
+          :data="paginatedData"
+          border
+          stripe
+          style="width:100%"
+          :max-height="isFullscreen ? 'calc(100vh - 140px)' : '800'"
+          size="small"
+          highlight-current-row
+          default-expand-all
+          show-header
+        >
         <!-- Level 1 序号 -->
         <el-table-column type="index" label="序号" width="55" align="center" fixed="left" />
 
         <!-- Level 1 客户名称 -->
-        <el-table-column label="客户名称" align="center" min-width="220">
+        <el-table-column label="客户名称" align="center">
           <!-- Level 2 -->
           <el-table-column prop="groupName" label="集团名称" width="140" show-overflow-tooltip />
           <el-table-column prop="useUnit" label="使用单位名称" width="140" show-overflow-tooltip />
@@ -123,14 +124,14 @@
         <el-table-column prop="orderDate" label="订单日期" width="110" align="center" />
 
         <!-- Level 1 订单合同 -->
-        <el-table-column label="订单合同" align="center" min-width="200">
+        <el-table-column label="订单合同" align="center">
           <!-- Level 2 -->
           <el-table-column prop="orderSeq" label="使用单位订单序号" width="140" align="center" />
           <el-table-column prop="contractNo" label="合同编号" width="180" show-overflow-tooltip />
         </el-table-column>
 
         <!-- Level 1 合同产品 -->
-        <el-table-column label="合同产品" align="center" min-width="220">
+        <el-table-column label="合同产品" align="center">
           <!-- Level 2 -->
           <el-table-column prop="innerSeq" label="序号" width="60" align="center" />
           <el-table-column prop="productName" label="产品名称" width="200" show-overflow-tooltip />
@@ -151,9 +152,9 @@
         </el-table-column>
 
         <!-- Level 1 产品规格 -->
-        <el-table-column label="产品规格" align="center" min-width="560">
+        <el-table-column label="产品规格" align="center">
           <!-- Level 2 外袋 -->
-          <el-table-column label="外袋" align="center" min-width="560">
+          <el-table-column label="外袋" align="center">
             <!-- Level 3 -->
             <el-table-column prop="bagWidth" label="宽度*有效长度（cm）" width="130" align="center" show-overflow-tooltip />
             <el-table-column prop="weight" label="重量（g/套）" width="100" align="center" />
@@ -164,6 +165,7 @@
           </el-table-column>
         </el-table-column>
       </el-table>
+      </div>
 
       <div class="pagination-wrap">
         <el-pagination
@@ -700,6 +702,18 @@ const summaryData = computed(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.table-scroll-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  :deep(.el-table) {
+    width: max-content !important;
+    min-width: 100% !important;
+  }
 }
 
 .pagination-wrap {
